@@ -1,12 +1,15 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import threading
+import calendar
+import pytz  # Add this import at the top
 
 class Database:
     def __init__(self):
         self._local = threading.local()
         self.db_path = 'chats.db'
         self._init_db()
+        self.timezone = pytz.timezone('Asia/Kolkata')  # Set IST timezone
 
     def _get_conn(self):
         if not hasattr(self._local, 'conn'):
@@ -16,6 +19,8 @@ class Database:
     def _init_db(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+        
+        # Chat history table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS chat_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,8 +30,81 @@ class Database:
                 sentiment REAL
             )
         ''')
+        
+        # Mood tracking table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS mood_tracking (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT,
+                mood_score REAL,
+                notes TEXT
+            )
+        ''')
+        
+        # Activities table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS activities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                description TEXT,
+                points INTEGER,
+                category TEXT
+            )
+        ''')
+        
+        # User progress table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT,
+                activity_id INTEGER,
+                completed BOOLEAN,
+                points_earned INTEGER,
+                FOREIGN KEY (activity_id) REFERENCES activities (id)
+            )
+        ''')
+        
+        # Add activity notes table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS activity_notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                activity_id INTEGER,
+                timestamp TEXT,
+                notes TEXT,
+                FOREIGN KEY (activity_id) REFERENCES activities (id)
+            )
+        ''')
+        
+        # Initialize default activities if empty
+        cursor.execute('SELECT COUNT(*) FROM activities')
+        if cursor.fetchone()[0] == 0:
+            self._init_default_activities(cursor)
+        
         conn.commit()
         conn.close()
+
+    def _init_default_activities(self, cursor):
+        default_activities = [
+            ('Deep Breathing', 'Practice deep breathing for 5 minutes', 10, 'mindfulness'),
+            ('Gratitude Journal', 'Write down 3 things you are grateful for', 15, 'reflection'),
+            ('Walking', 'Take a 10-minute walk outside', 20, 'exercise'),
+            ('Meditation', 'Complete a 5-minute guided meditation', 25, 'mindfulness'),
+            ('Mood Check-in', 'Record your current mood and feelings', 5, 'tracking')
+        ]
+        cursor.executemany('''
+            INSERT INTO activities (name, description, points, category)
+            VALUES (?, ?, ?, ?)
+        ''', default_activities)
+
+    def _get_current_time(self):
+        """Get current time in IST"""
+        return datetime.now(self.timezone)
+
+    def _format_date_for_db(self, date):
+        """Format date in IST for database query"""
+        if not date.tzinfo:
+            date = self.timezone.localize(date)
+        return date.strftime('%Y-%m-%d %H:%M:%S')
 
     def add_chat_entry(self, user_message, ai_response, sentiment=0.0):
         conn = self._get_conn()
@@ -34,7 +112,7 @@ class Database:
         cursor.execute('''
             INSERT INTO chat_history (timestamp, user_message, ai_response, sentiment)
             VALUES (?, ?, ?, ?)
-        ''', (datetime.now().isoformat(), user_message, ai_response, sentiment))
+        ''', (self._get_current_time().isoformat(), user_message, ai_response, sentiment))
         conn.commit()
 
     def get_recent_chats(self, limit=10):
@@ -63,6 +141,316 @@ class Database:
             ORDER BY timestamp ASC
         ''')
         return cursor.fetchall()
+
+    def add_mood_entry(self, mood_score, notes=""):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO mood_tracking (timestamp, mood_score, notes)
+            VALUES (?, ?, ?)
+        ''', (self._get_current_time().isoformat(), mood_score, notes))
+        conn.commit()
+
+    def get_weekly_mood_average(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        week_ago = (self._get_current_time() - timedelta(days=7)).isoformat()
+        cursor.execute('''
+            SELECT AVG(mood_score)
+            FROM mood_tracking
+            WHERE timestamp > ?
+        ''', (week_ago,))
+        return cursor.fetchone()[0] or 0.0
+
+    def get_daily_mood_average(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        today = self._get_current_time().date().isoformat()
+        cursor.execute('''
+            SELECT AVG(mood_score)
+            FROM mood_tracking
+            WHERE date(timestamp) = ?
+        ''', (today,))
+        return cursor.fetchone()[0] or 0.0
+
+    def get_mood_trend(self, days=7):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        start_date = (self._get_current_time() - timedelta(days=days-1)).date().isoformat()
+        
+        cursor.execute('''
+            SELECT 
+                date(timestamp) as day,
+                AVG(mood_score) as avg_mood,
+                COUNT(*)
+                as entries
+            FROM mood_tracking
+            WHERE date(timestamp) >= ?
+            GROUP BY date(timestamp)
+            ORDER BY date(timestamp)
+        ''', (start_date,))
+        
+        return cursor.fetchall()
+
+    def get_activity_recommendations(self, current_mood):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        # Different recommendations based on mood
+        if current_mood < 0.3:  # Low mood
+            category = 'mindfulness'
+        elif current_mood < 0.7:  # Neutral mood
+            category = 'exercise'
+        else:  # Good mood
+            category = 'reflection'
+            
+        cursor.execute('''
+            SELECT DISTINCT a.name, a.description, a.points
+            FROM activities a
+            WHERE a.category = ?
+            ORDER BY RANDOM()
+            LIMIT 3
+        ''', (category,))
+        
+        recommendations = cursor.fetchall()
+        
+        # Also get recently completed activities for context
+        cursor.execute('''
+            SELECT DISTINCT a.name
+            FROM user_progress p
+            JOIN activities a ON p.activity_id = a.id
+            WHERE p.timestamp > datetime('now', '-7 days')
+            ORDER BY p.timestamp DESC
+            LIMIT 5
+        ''')
+        recent = [row[0] for row in cursor.fetchall()]
+        
+        return recommendations, recent
+
+    def add_generated_activity(self, activity_dict):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO activities (name, description, points, category)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            activity_dict['name'],
+            activity_dict['description'],
+            activity_dict['points'],
+            activity_dict['category']
+        ))
+        conn.commit()
+        return cursor.lastrowid
+
+    def complete_activity(self, activity_name):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        now = self._get_current_time()
+        print(f"Completing activity at: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        
+        cursor.execute('''
+            SELECT id, points FROM activities WHERE name = ?
+        ''', (activity_name,))
+        activity = cursor.fetchone()
+        if activity:
+            activity_id, points = activity
+            timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute('''
+                INSERT INTO user_progress (timestamp, activity_id, completed, points_earned)
+                VALUES (?, ?, ?, ?)
+            ''', (timestamp, activity_id, True, points))
+            conn.commit()
+            return points
+        return 0
+
+    def get_total_points(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        cursor.execute('SELECT SUM(points_earned) FROM user_progress')
+        return cursor.fetchone()[0] or 0
+
+    def get_weekly_progress(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        week_ago = (self._get_current_time() - timedelta(days=7)).isoformat()
+        cursor.execute('''
+            SELECT a.name, COUNT(*), SUM(p.points_earned)
+            FROM user_progress p
+            JOIN activities a ON p.activity_id = a.id
+            WHERE p.timestamp > ?
+            GROUP BY a.name
+        ''', (week_ago,))
+        return cursor.fetchall()
+
+    def add_activity_note(self, activity_name, notes):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM activities WHERE name = ?', (activity_name,))
+        activity_id = cursor.fetchone()[0]
+        cursor.execute('''
+            INSERT INTO activity_notes (activity_id, timestamp, notes)
+            VALUES (?, ?, ?)
+        ''', (activity_id, self._get_current_time().isoformat(), notes))
+        conn.commit()
+
+    def get_weekly_activities(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        # Get start of week in IST
+        today = self._get_current_time()
+        start_of_week = (today - timedelta(days=today.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0, tzinfo=None
+        )
+        
+        print(f"Start of week: {start_of_week.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Use explicit date mapping instead of strftime('%w')
+        cursor.execute('''
+            WITH RECURSIVE dates(date) AS (
+                SELECT date(?)
+                UNION ALL
+                SELECT date(date, '+1 day')
+                FROM dates
+                WHERE date < date(?, '+6 day')
+            )
+            SELECT 
+                CAST(strftime('%w', d.date) AS INTEGER) AS day_index,
+                GROUP_CONCAT(a.name) as activities
+            FROM dates d
+            LEFT JOIN user_progress p ON date(p.timestamp) = d.date
+            LEFT JOIN activities a ON p.activity_id = a.id
+            WHERE d.date <= date(?)
+            GROUP BY d.date
+            ORDER BY d.date
+        ''', (start_of_week.strftime('%Y-%m-%d'), 
+              start_of_week.strftime('%Y-%m-%d'),
+              today.strftime('%Y-%m-%d')))
+        
+        activities_by_day = {}
+        for day, activities in cursor.fetchall():
+            # Convert Sunday from 0 to 6 for consistent indexing
+            day_index = 6 if day == 0 else day - 1
+            print(f"Day {day_index} ({day}): {activities}")
+            if activities:
+                activities_by_day[day_index] = activities.split(',')
+        
+        return activities_by_day
+
+    def get_weekly_activity_count(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        week_ago = (self._get_current_time() - timedelta(days=7)).isoformat()
+        cursor.execute('''
+            SELECT COUNT(*)
+            FROM user_progress
+            WHERE timestamp > ?
+        ''', (week_ago,))
+        return cursor.fetchone()[0] or 0
+
+    def get_todays_activities(self):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        # Get start and end of today in ISO format
+        today_start = self._get_current_time().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        today_end = self._get_current_time().replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
+        
+        cursor.execute('''
+            SELECT 
+                a.name,
+                a.category,
+                p.points_earned,
+                n.notes,
+                p.timestamp
+            FROM user_progress p
+            JOIN activities a ON p.activity_id = a.id
+            LEFT JOIN activity_notes n ON n.activity_id = a.id 
+                AND datetime(n.timestamp) BETWEEN datetime(?) AND datetime(?)
+            WHERE datetime(p.timestamp) BETWEEN datetime(?) AND datetime(?)
+            ORDER BY p.timestamp DESC
+        ''', (today_start, today_end, today_start, today_end))
+        
+        return cursor.fetchall()
+
+    def get_day_activities(self, date):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        # Convert to IST if needed and strip timezone info for SQLite
+        if not date.tzinfo:
+            date = self.timezone.localize(date)
+        date = date.replace(tzinfo=None)  # SQLite doesn't handle timezone info
+        
+        # Debug print
+        print(f"Querying activities for date: {date.strftime('%Y-%m-%d')}")
+        
+        cursor.execute('''
+            SELECT 
+                p.id,
+                a.name,
+                a.category,
+                p.points_earned as points,
+                n.notes,
+                p.timestamp
+            FROM user_progress p
+            JOIN activities a ON p.activity_id = a.id
+            LEFT JOIN activity_notes n ON n.activity_id = a.id 
+            WHERE date(p.timestamp) = date(?)
+            ORDER BY p.timestamp DESC
+        ''', (date.strftime('%Y-%m-%d'),))
+        
+        activities = []
+        for row in cursor.fetchall():
+            # Debug print
+            print(f"Found activity: {row[1]} at {row[5]}")
+            activities.append({
+                'id': row[0],
+                'name': row[1],
+                'category': row[2],
+                'points': row[3],
+                'notes': row[4],
+                'timestamp': row[5]
+            })
+        
+        return activities
+
+    def delete_activity(self, progress_id, date):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        # Start a transaction
+        cursor.execute('BEGIN TRANSACTION')
+        try:
+            # Get activity details before deletion
+            cursor.execute('''
+                SELECT points_earned, activity_id
+                FROM user_progress
+                WHERE id = ?
+            ''', (progress_id,))
+            points, activity_id = cursor.fetchone()
+
+            # Delete from user_progress
+            cursor.execute('DELETE FROM user_progress WHERE id = ?', (progress_id,))
+            
+            # Delete associated notes
+            cursor.execute('''
+                DELETE FROM activity_notes 
+                WHERE activity_id = ? AND date(timestamp) = date(?)
+            ''', (activity_id, date.isoformat()))
+            
+            # Update mood tracking (reduce impact)
+            cursor.execute('''
+                UPDATE mood_tracking
+                SET mood_score = mood_score - ?
+                WHERE date(timestamp) = date(?)
+            ''', (points * 0.01, date.isoformat()))  # Adjust mood impact
+            
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
 
     def close(self):
         if hasattr(self._local, 'conn'):
