@@ -1,13 +1,12 @@
 from ollama import Client # type: ignore
 import json
-import sys
-import ast
 from datetime import datetime
+from config import OLLAMA_HOST, AI_MODEL
 
 class AIHelper:
     def __init__(self):
-        self.client = Client(host='http://localhost:11434')
-        self.model = "qwen2.5:3b"
+        self.client = Client(host=OLLAMA_HOST)
+        self.model = AI_MODEL
         self.db = None
 
     def set_database(self, db):
@@ -15,13 +14,11 @@ class AIHelper:
 
     def get_response(self, user_input):
         try:
-            # Get today's activities with better formatting
             todays_activities = []
             if self.db:
                 try:
                     activities = self.db.get_todays_activities()
                     if activities:
-                        # Group activities by category
                         by_category = {}
                         for name, category, points, notes, timestamp in activities:
                             if category not in by_category:
@@ -32,25 +29,22 @@ class AIHelper:
                                 activity_str += f" - Note: {notes}"
                             by_category[category].append(activity_str)
                         
-                        # Format activities by category
                         for category, acts in by_category.items():
                             todays_activities.append(f"{category.title()}: {', '.join(acts)}")
                 except Exception as e:
                     print(f"Warning: Could not get today's activities: {e}")
 
-            # Add today's activities to context with better structure
             daily_context = "\nToday's Activities:"
             if todays_activities:
                 daily_context += "\n• " + "\n• ".join(todays_activities)
             else:
                 daily_context += "\nNo activities completed today yet."
 
-            # Get recent activities and progress
             completed_activities = []
             total_points = 0
             if self.db:
                 try:
-                    recommendations, recent = self.db.get_activity_recommendations(0.5)  # Use neutral mood for context
+                    recommendations, recent = self.db.get_activity_recommendations(0.5) 
                     completed_activities = recent
                     total_points = self.db.get_total_points()
                 except Exception as e:

@@ -1,15 +1,14 @@
 import sqlite3
 from datetime import datetime, timedelta, timezone
 import threading
-import calendar
-import pytz  # Add this import at the top
+import pytz  # type: ignore
 
 class Database:
     def __init__(self):
         self._local = threading.local()
-        self.db_path = 'chats.db'
+        self.db_path = 'database.db'
         self._init_db()
-        self.timezone = pytz.timezone('Asia/Kolkata')  # Set IST timezone
+        self.timezone = pytz.timezone('Asia/Kolkata')
 
     def _get_conn(self):
         if not hasattr(self._local, 'conn'):
@@ -64,7 +63,7 @@ class Database:
             )
         ''')
         
-        # Add activity notes table
+        # Activity notes table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS activity_notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +74,6 @@ class Database:
             )
         ''')
         
-        # Initialize default activities if empty
         cursor.execute('SELECT COUNT(*) FROM activities')
         if cursor.fetchone()[0] == 0:
             self._init_default_activities(cursor)
@@ -97,11 +95,9 @@ class Database:
         ''', default_activities)
 
     def _get_current_time(self):
-        """Get current time in IST"""
         return datetime.now(self.timezone)
 
     def _format_date_for_db(self, date):
-        """Format date in IST for database query"""
         if not date.tzinfo:
             date = self.timezone.localize(date)
         return date.strftime('%Y-%m-%d %H:%M:%S')
@@ -196,7 +192,7 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        # Different recommendations based on mood
+        # recommendations based on mood
         if current_mood < 0.3:  # Low mood
             category = 'mindfulness'
         elif current_mood < 0.7:  # Neutral mood
@@ -214,7 +210,7 @@ class Database:
         
         recommendations = cursor.fetchall()
         
-        # Also get recently completed activities for context
+        # recently completed activities
         cursor.execute('''
             SELECT DISTINCT a.name
             FROM user_progress p
@@ -298,7 +294,6 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        # Get start of week in IST
         today = self._get_current_time()
         start_of_week = (today - timedelta(days=today.weekday())).replace(
             hour=0, minute=0, second=0, microsecond=0, tzinfo=None
@@ -306,7 +301,6 @@ class Database:
         
         print(f"Start of week: {start_of_week.strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # Use explicit date mapping instead of strftime('%w')
         cursor.execute('''
             WITH RECURSIVE dates(date) AS (
                 SELECT date(?)
@@ -330,7 +324,7 @@ class Database:
         
         activities_by_day = {}
         for day, activities in cursor.fetchall():
-            # Convert Sunday from 0 to 6 for consistent indexing
+            # convert Sunday from 0 to 6
             day_index = 6 if day == 0 else day - 1
             print(f"Day {day_index} ({day}): {activities}")
             if activities:
@@ -353,7 +347,6 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        # Get start and end of today in ISO format
         today_start = self._get_current_time().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         today_end = self._get_current_time().replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
         
@@ -378,13 +371,9 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        # Convert to IST if needed and strip timezone info for SQLite
         if not date.tzinfo:
             date = self.timezone.localize(date)
-        date = date.replace(tzinfo=None)  # SQLite doesn't handle timezone info
-        
-        # Debug print
-        print(f"Querying activities for date: {date.strftime('%Y-%m-%d')}")
+        date = date.replace(tzinfo=None)
         
         cursor.execute('''
             SELECT 
@@ -403,8 +392,6 @@ class Database:
         
         activities = []
         for row in cursor.fetchall():
-            # Debug print
-            print(f"Found activity: {row[1]} at {row[5]}")
             activities.append({
                 'id': row[0],
                 'name': row[1],
@@ -413,17 +400,14 @@ class Database:
                 'notes': row[4],
                 'timestamp': row[5]
             })
-        
         return activities
 
     def delete_activity(self, progress_id, date):
         conn = self._get_conn()
         cursor = conn.cursor()
-        
-        # Start a transaction
+
         cursor.execute('BEGIN TRANSACTION')
         try:
-            # Get activity details before deletion
             cursor.execute('''
                 SELECT points_earned, activity_id
                 FROM user_progress
@@ -431,21 +415,18 @@ class Database:
             ''', (progress_id,))
             points, activity_id = cursor.fetchone()
 
-            # Delete from user_progress
             cursor.execute('DELETE FROM user_progress WHERE id = ?', (progress_id,))
-            
-            # Delete associated notes
+
             cursor.execute('''
                 DELETE FROM activity_notes 
                 WHERE activity_id = ? AND date(timestamp) = date(?)
             ''', (activity_id, date.isoformat()))
-            
-            # Update mood tracking (reduce impact)
+
             cursor.execute('''
                 UPDATE mood_tracking
                 SET mood_score = mood_score - ?
                 WHERE date(timestamp) = date(?)
-            ''', (points * 0.01, date.isoformat()))  # Adjust mood impact
+            ''', (points * 0.01, date.isoformat()))  # adjust mood
             
             conn.commit()
         except Exception as e:
@@ -456,3 +437,74 @@ class Database:
         if hasattr(self._local, 'conn'):
             self._local.conn.close()
             del self._local.conn
+
+    def get_activities_for_week(self, start_date):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        if not start_date.tzinfo:
+            start_date = self.timezone.localize(start_date)
+        
+        start_date = start_date.replace(tzinfo=None)
+        end_date = (start_date + timedelta(days=6))
+        
+        print(f"Fetching activities from {start_date} to {end_date}")
+        
+        cursor.execute('''
+            WITH RECURSIVE dates(date) AS (
+                SELECT date(?)
+                UNION ALL
+                SELECT date(date, '+1 day')
+                FROM dates
+                WHERE date < date(?, '+6 day')
+            )
+            SELECT 
+                CAST(strftime('%w', d.date) AS INTEGER) AS day_index,
+                GROUP_CONCAT(a.name) as activities
+            FROM dates d
+            LEFT JOIN user_progress p ON date(p.timestamp) = d.date
+            LEFT JOIN activities a ON p.activity_id = a.id
+            GROUP BY d.date
+            ORDER BY d.date
+        ''', (start_date.strftime('%Y-%m-%d'), start_date.strftime('%Y-%m-%d')))
+        
+        activities_by_day = {}
+        for day, activities in cursor.fetchall():
+            day_index = 6 if day == 0 else day - 1
+            if activities:
+                activities_by_day[day_index] = activities.split(',')
+        
+        return activities_by_day
+
+    def get_stats_for_week(self, start_date):
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        
+        if not start_date.tzinfo:
+            start_date = self.timezone.localize(start_date)
+        start_date = start_date.replace(tzinfo=None)
+        end_date = (start_date + timedelta(days=6))
+        
+        cursor.execute('''
+            SELECT COUNT(*) as activity_count, 
+                   SUM(points_earned) as total_points
+            FROM user_progress
+            WHERE date(timestamp) BETWEEN date(?) AND date(?)
+        ''', (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+        
+        count_row = cursor.fetchone()
+        
+        # Get average mood
+        cursor.execute('''
+            SELECT AVG(mood_score)
+            FROM mood_tracking
+            WHERE date(timestamp) BETWEEN date(?) AND date(?)
+        ''', (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+        
+        mood_row = cursor.fetchone()
+        
+        return {
+            'activity_count': count_row[0] or 0,
+            'points': count_row[1] or 0,
+            'mood_avg': mood_row[0] or 0.0
+        }

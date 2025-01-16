@@ -11,8 +11,8 @@ import calendar
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np  # Add this import
-import pytz  # Add this import at the top
+import numpy as np 
+import pytz  # type: ignore
 
 class MentalHealthApp:
     def __init__(self, root):
@@ -20,24 +20,22 @@ class MentalHealthApp:
         self.root.title("Stacy - AI Mental Health Assistant")
         self.root.geometry("1000x700")
         
-        # Configure the style
         self.style = ttk.Style()
-        self.style.theme_use('clam')  # or 'vista' for Windows-like theme
-        
-        # Initialize components first
+        self.style.theme_use('vista')
+        #self.style.theme_use('clam')
+
         self.db = Database()
         self.ai_helper = AIHelper()
         self.ai_helper.set_database(self.db)
         self.sentiment_analyzer = SentimentAnalyzer()
         
-        # Initialize instance variables
-        self.current_activities = []  # Add this line here
-        self.username = "User"  # TODO: Add login system
-        self.current_mood = self.db.get_daily_mood_average() or 0.5  # Initialize with today's average or neutral
-        self.detail_popup = None  # Add this line
-        self.timezone = pytz.timezone('Asia/Kolkata')  # Add this line
+        self.current_activities = []
+        self.username = "User"
+        self.current_mood = self.db.get_daily_mood_average() or 0.5
+        self.detail_popup = None
+        self.timezone = pytz.timezone('Asia/Kolkata')
+        self.current_week_offset = 0
         
-        # Configure custom styles
         self.style.configure('Send.TButton', 
                            padding=10, 
                            font=('Segoe UI', 10))
@@ -46,8 +44,10 @@ class MentalHealthApp:
         self.style.configure('Input.TEntry', 
                            padding=5, 
                            font=('Segoe UI', 11))
+        self.style.configure('Today.TButton', 
+                           padding=5,
+                           font=('Segoe UI', 9))
         
-        # Initialize components
         self.create_gui()
         self.update_stats()
 
@@ -62,20 +62,16 @@ class MentalHealthApp:
             '/mood': self.cmd_mood
         }
 
-        # Set up signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
     def create_gui(self):
-        # Main container
         main_container = ttk.Frame(self.root, style='Chat.TFrame')
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Create notebook (tabbed interface)
         self.notebook = ttk.Notebook(main_container)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
-        # Create tabs
         self.chat_tab = ttk.Frame(self.notebook)
         self.activities_tab = ttk.Frame(self.notebook)
         self.progress_tab = ttk.Frame(self.notebook)
@@ -84,13 +80,11 @@ class MentalHealthApp:
         self.notebook.add(self.activities_tab, text="Daily Activities")
         self.notebook.add(self.progress_tab, text="Weekly Progress")
 
-        # Setup each tab
         self.setup_chat_tab()
         self.setup_activities_tab()
         self.setup_progress_tab()
 
     def setup_chat_tab(self):
-        # Title frame
         title_frame = ttk.Frame(self.chat_tab)
         title_frame.pack(fill=tk.X, pady=(0, 20))
         
@@ -99,14 +93,12 @@ class MentalHealthApp:
                                font=('Segoe UI', 16, 'bold'))
         title_label.pack(side=tk.LEFT)
         
-        # Status indicator
         self.status_label = ttk.Label(title_frame, 
                                      text="● Online", 
                                      font=('Segoe UI', 10),
                                      foreground='green')
         self.status_label.pack(side=tk.RIGHT)
 
-        # Chat area with custom styling
         chat_frame = ttk.Frame(self.chat_tab, style='Chat.TFrame')
         chat_frame.pack(fill=tk.BOTH, expand=True)
         
@@ -118,7 +110,8 @@ class MentalHealthApp:
             borderwidth=1,
             relief="solid",
             padx=10,
-            pady=10
+            pady=10,
+            state='disabled'
         )
         self.chat_area.pack(fill=tk.BOTH, expand=True)
         self.chat_area.tag_configure('user', 
@@ -153,7 +146,6 @@ class MentalHealthApp:
         )
         send_button.pack(side=tk.RIGHT)
 
-        # Command help text
         help_label = ttk.Label(
             self.chat_tab,
             text="Type /help for available commands",
@@ -162,7 +154,6 @@ class MentalHealthApp:
         )
         help_label.pack(pady=(10, 0))
         
-        # Add stats panel
         stats_frame = ttk.LabelFrame(self.chat_tab, text="Progress & Stats", padding=10)
         stats_frame.pack(fill=tk.X, pady=(0, 10))
         
@@ -175,18 +166,13 @@ class MentalHealthApp:
         self.streak_label = ttk.Label(stats_frame, text="Activities completed: 0")
         self.streak_label.pack(side=tk.LEFT, padx=5)
 
-        # Bind events
         self.message_input.bind("<Return>", lambda e: self.send_message())
-        
-        # Initial greeting
         self.display_message("Hello! I'm Stacy, your AI mental health assistant. How are you feeling today?", 'assistant')
 
     def setup_activities_tab(self):
-        # Configure style for completed activities
         self.style.configure('Completed.TLabelframe', 
                            background='#e8f5e9')
 
-        # Activities recommendation panel
         ttk.Label(
             self.activities_tab,
             text=f"Hello {self.username}!",
@@ -196,18 +182,15 @@ class MentalHealthApp:
         self.activities_frame = ttk.Frame(self.activities_tab)
         self.activities_frame.pack(fill=tk.BOTH, expand=True, padx=20)
 
-        # Add refresh controls frame
         controls_frame = ttk.Frame(self.activities_tab)
         controls_frame.pack(fill=tk.X, padx=20, pady=10)
 
-        # Force refresh button
         ttk.Button(
             controls_frame,
             text="Generate New Activities",
             command=self.generate_new_activities
         ).pack(side=tk.LEFT, padx=5)
 
-        # Auto-refresh toggle
         self.auto_refresh_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(
             controls_frame,
@@ -218,7 +201,6 @@ class MentalHealthApp:
         self.refresh_activities()
 
     def setup_progress_tab(self):
-        # Weekly progress tracking
         progress_header = ttk.Frame(self.progress_tab)
         progress_header.pack(fill=tk.X, padx=20, pady=10)
 
@@ -228,11 +210,38 @@ class MentalHealthApp:
             font=('Segoe UI', 16, 'bold')
         ).pack(side=tk.LEFT)
 
-        # Calendar view
+        nav_frame = ttk.Frame(progress_header)
+        nav_frame.pack(side=tk.RIGHT)
+
+        ttk.Button(
+            nav_frame,
+            text="← Previous Week",
+            command=self.previous_week
+        ).pack(side=tk.LEFT, padx=5)
+
+        self.week_label = ttk.Label(
+            nav_frame,
+            text="Current Week",
+            font=('Segoe UI', 10)
+        )
+        self.week_label.pack(side=tk.LEFT, padx=10)
+
+        ttk.Button(
+            nav_frame,
+            text="Next Week →",
+            command=self.next_week
+        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
+            nav_frame,
+            text="Today",
+            style='Today.TButton',
+            command=self.goto_current_week
+        ).pack(side=tk.LEFT, padx=(15, 5))
+
         calendar_frame = ttk.LabelFrame(self.progress_tab, text="Activity Log", padding=10)
         calendar_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
-        # Create calendar grid
         self.calendar_cells = []
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         
@@ -245,7 +254,6 @@ class MentalHealthApp:
             cell.grid(row=1, column=i, padx=5, pady=5, sticky='nsew')
             self.calendar_cells.append(cell)
 
-        # Log activity button
         log_frame = ttk.Frame(self.progress_tab)
         log_frame.pack(fill=tk.X, padx=20, pady=10)
 
@@ -255,7 +263,6 @@ class MentalHealthApp:
             command=self.show_log_activity_dialog
         ).pack(side=tk.LEFT)
 
-        # Stats display
         self.stats_display = ttk.Label(
             self.progress_tab,
             text="",
@@ -264,18 +271,15 @@ class MentalHealthApp:
         )
         self.stats_display.pack(pady=10)
 
-        # Add mood trend section
         mood_frame = ttk.LabelFrame(self.progress_tab, text="Mood Trend", padding=10)
         mood_frame.pack(fill=tk.X, padx=20, pady=10)
 
-        # Create matplotlib figure for mood trend
         self.fig = Figure(figsize=(8, 2), dpi=100)
         self.ax = self.fig.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.fig, master=mood_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.X)
 
-        # Today's mood average
         today_mood = ttk.Label(
             mood_frame,
             text="Today's Mood: N/A",
@@ -285,7 +289,7 @@ class MentalHealthApp:
 
         self.mood_labels = {
             'today': today_mood,
-            'week': self.mood_label  # existing weekly mood label
+            'week': self.mood_label 
         }
 
         self.update_progress_view()
@@ -298,8 +302,10 @@ class MentalHealthApp:
 
     def cmd_clear(self):
         self.db.clear_history()
-        self.chat_area.delete(1.0, tk.END)
-        self.display_message("System: Chat history cleared.")
+        self.chat_area.config(state='normal')  # Enable editing
+        self.chat_area.delete('1.0', tk.END)
+        self.chat_area.config(state='disabled')  # Disable editing
+        self.display_message("System: Chat history cleared.", 'system')
 
     def cmd_exit(self):
         self.on_closing()
@@ -310,8 +316,8 @@ class MentalHealthApp:
         for timestamp, msg, resp in history:
             try:
                 time_str = datetime.fromisoformat(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-            except AttributeError:  # For older Python versions
-                time_str = timestamp.split('.')[0].replace('T', ' ')  # Simple ISO format parsing
+            except AttributeError: 
+                time_str = timestamp.split('.')[0].replace('T', ' ')
             self.display_message(f"[{time_str}]")
             self.display_message(f"You: {msg}")
             self.display_message(f"AI Assistant: {resp}")
@@ -335,14 +341,12 @@ Available commands:
         if not user_message:
             return
 
-        # Check if it's a command
         if (user_message.startswith('/')):
             if not self.handle_command(user_message):
                 self.display_message("System: Unknown command. Type /help for available commands.", 'system')
             self.message_input.delete(0, tk.END)
             return
 
-        # Regular message handling
         self.display_message(user_message, 'user')
         self.message_input.delete(0, tk.END)
         self.message_input.config(state='disabled')
@@ -350,23 +354,18 @@ Available commands:
 
     def get_ai_response(self, user_message):
         try:
-            # Get AI response
             ai_response = self.ai_helper.get_response(user_message)
             
-            # Update GUI in main thread
             self.root.after(0, self.handle_ai_response, user_message, ai_response)
         except Exception as e:
             self.root.after(0, self.display_message, f"Error: {str(e)}")
 
     def handle_ai_response(self, user_message, ai_response):
-        # Analyze sentiment with mood impact
         sentiment_score, mood, mood_impact = self.sentiment_analyzer.analyze_sentiment(user_message)
         
-        # Update current mood
         old_mood = self.current_mood
-        self.current_mood = max(0.0, min(1.0, self.current_mood + mood_impact))  # Keep between 0 and 1
+        self.current_mood = max(0.0, min(1.0, self.current_mood + mood_impact))
         
-        # Get activity recommendations based on mood
         if mood == "low":
             recommendations, recent = self.db.get_activity_recommendations(sentiment_score)
             if recommendations:
@@ -374,32 +373,32 @@ Available commands:
                 for name, desc, points in recommendations:
                     ai_response += f"\n• {name} ({points} points) - {desc}"
         
-        # Display response and save to database
+
         self.display_message(ai_response, 'assistant')
         
-        # Show mood change if significant
-        if abs(mood_impact) >= 0.01:  # Only show if change is notable
+        if abs(mood_impact) >= 0.01:
             change_text = f"Mood {'increased' if mood_impact > 0 else 'decreased'} by {abs(mood_impact):.2f}"
             mood_color = self._get_mood_color(self.current_mood)
             self.display_message(f"〉 {change_text} ({self.current_mood:.2f})", 'system')
         
         self.message_input.config(state='normal')
         self.db.add_chat_entry(user_message, ai_response, sentiment_score)
-        self.db.add_mood_entry(self.current_mood)  # Save new mood score
+        self.db.add_mood_entry(self.current_mood)
         self.update_stats()
 
     def display_message(self, message, msg_type='system'):
+        self.chat_area.config(state='normal')
         self.chat_area.insert(tk.END, "\n", msg_type)
         if msg_type == 'user':
             message = "You: " + message
         elif msg_type == 'assistant':
             message = "Stacy: " + message
         elif msg_type == 'system' and message.startswith('〉'):
-            # Special formatting for mood changes
             msg_type = 'mood_change'
             
         self.chat_area.insert(tk.END, message + "\n", msg_type)
         self.chat_area.see(tk.END)
+        self.chat_area.config(state='disabled')
 
     def update_stats(self):
         points = self.db.get_total_points()
@@ -412,11 +411,9 @@ Available commands:
             activities_completed = sum(count for _, count, _ in progress)
             self.streak_label.config(text=f"Activities completed: {activities_completed}")
         
-        # Update mood averages and trend
         daily_mood = self.db.get_daily_mood_average()
         weekly_mood = self.db.get_weekly_mood_average()
         
-        # Update mood labels
         self.mood_labels['today'].config(
             text=f"Today's Mood: {daily_mood:.2f} ({self._get_mood_message(daily_mood)})",
             foreground=self._get_mood_color(daily_mood)
@@ -426,33 +423,25 @@ Available commands:
             foreground=self._get_mood_color(weekly_mood)
         )
         
-        # Update mood trend graph
         self.update_mood_trend()
-
-        # Schedule next update
-        self.root.after(60000, self.update_stats)  # Update every minute
+        self.root.after(60000, self.update_stats)
 
     def update_mood_trend(self):
         try:
-            # Clear previous plot
             self.ax.clear()
-            
-            # Get mood trend data
+
             trend_data = self.db.get_mood_trend(7)
-            if trend_data and len(trend_data) > 1:  # Need at least 2 points for trend line
+            if trend_data and len(trend_data) > 1:
                 dates, moods, entries = zip(*trend_data)
-                
-                # Plot mood line
+
                 self.ax.plot(range(len(dates)), moods, 'b-', label='Mood')
                 self.ax.scatter(range(len(dates)), moods, c='blue')
-                
-                # Customize plot
+
                 self.ax.set_ylim(0, 1)
                 self.ax.set_xticks(range(len(dates)))
                 self.ax.set_xticklabels([d.split('-')[2] for d in dates], rotation=45)
                 self.ax.grid(True, linestyle='--', alpha=0.7)
-                
-                # Add trend line only if we have enough data
+
                 if len(dates) > 1:
                     z = np.polyfit(range(len(dates)), moods, 1)
                     p = np.poly1d(z)
@@ -500,7 +489,6 @@ Available commands:
             self.display_message(f"• {name} ({points} points) - {desc}", 'system')
 
     def cmd_complete(self):
-        # Show completion dialog
         dialog = tk.Toplevel(self.root)
         dialog.title("Complete Activity")
         dialog.geometry("300x200")
@@ -546,30 +534,24 @@ Available commands:
 
     def refresh_activities(self):
         try:
-            # Clear existing recommendations
             for widget in self.activities_frame.winfo_children():
                 widget.destroy()
 
-            # Get user's recent mood and activities
             mood_score = self.db.get_weekly_mood_average()
             recommendations, recent = self.db.get_activity_recommendations(mood_score)
-            
-            # Convert recent activities list to strings if needed
+
             recent_activities = [str(act) for act in recent] if recent else []
 
-            # Force new activities if requested or none exist
             activities = None
             if not self.current_activities or not any(not self.is_activity_completed(a['name']) for a in self.current_activities):
                 activities = self.ai_helper.generate_activities(mood_score, recent_activities)
                 if activities:
                     self.current_activities = activities
-                    # Save new activities to database
                     for activity in activities:
                         self.db.add_generated_activity(activity)
             else:
                 activities = self.current_activities
 
-            # Display header
             ttk.Label(
                 self.activities_frame,
                 text=f"Personalized Activities for {'Low' if mood_score < 0.3 else 'Neutral' if mood_score < 0.7 else 'Positive'} Mood",
@@ -577,7 +559,6 @@ Available commands:
             ).pack(pady=10)
 
             if activities:
-                # Display activity cards
                 for activity in activities:
                     self.create_activity_card(activity)
             else:
@@ -590,7 +571,7 @@ Available commands:
 
         except Exception as e:
             print(f"Error refreshing activities: {e}")
-            self.current_activities = []  # Reset on error
+            self.current_activities = [] 
 
     def quick_complete_activity(self, activity_name):
         points = self.db.complete_activity(activity_name)
@@ -601,14 +582,13 @@ Available commands:
         self.update_stats()
         self.update_progress_view()
         
-        # Check if auto-refresh is enabled and all activities are completed
         if self.auto_refresh_var.get() and all(self.is_activity_completed(a['name']) for a in self.current_activities):
             self.generate_new_activities()
         else:
-            self.refresh_activities()  # Just update completion status
+            self.refresh_activities()
 
     def generate_new_activities(self):
-        self.current_activities = []  # Force new activities
+        self.current_activities = []
         self.refresh_activities()
 
     def is_activity_completed(self, activity_name):
@@ -635,7 +615,6 @@ Available commands:
         desc_frame = ttk.Frame(card)
         desc_frame.pack(fill=tk.X)
 
-        # Check if activity is completed
         is_completed = False
         if self.db:
             today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
@@ -686,19 +665,17 @@ Available commands:
         dialog.title("Log Activity")
         dialog.geometry("500x400")
 
-        # Notebook for different logging methods
         notebook = ttk.Notebook(dialog)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        # Existing activities tab
+
         existing_tab = ttk.Frame(notebook)
         notebook.add(existing_tab, text="Existing Activities")
 
-        # Custom activity tab
+
         custom_tab = ttk.Frame(notebook)
         notebook.add(custom_tab, text="Custom Activity")
 
-        # Set up existing activities tab
         ttk.Label(existing_tab, text="Select an activity:").pack(pady=10)
         
         activity_var = tk.StringVar()
@@ -709,7 +686,6 @@ Available commands:
         activity_combo['values'] = activities
         activity_combo.pack(pady=5)
 
-        # Set up custom activity tab
         ttk.Label(
             custom_tab, 
             text="Describe your activity:",
@@ -731,14 +707,7 @@ Available commands:
         for label in preview_labels.values():
             label.pack(anchor=tk.W, pady=2)
 
-        # Create but don't pack the log button yet
-        log_button = ttk.Button(
-            custom_tab,
-            text="Log this Activity",
-            state='disabled'
-        )
-
-        current_preview = {'activity': None}  # Store current preview
+        current_preview = {'activity': None}
 
         def preview_custom_activity():
             description = description_text.get("1.0", tk.END).strip()
@@ -758,50 +727,95 @@ Available commands:
                         text=f"Description: {activity['description']}"
                     )
                     
-                    # Enable and show log button
+                    # Enable both buttons
                     current_preview['activity'] = activity
+                    edit_button.config(state='normal')
                     log_button.config(state='normal')
-                    log_button.pack(pady=5)
                     return activity
             return None
 
-        def log_previewed_activity():
-            activity = current_preview['activity']
-            if activity:
-                # Add to database and complete
-                activity_id = self.db.add_generated_activity(activity)
-                points = self.db.complete_activity(activity['name'])
-                
-                # Get notes if any
-                notes = notes_text.get("1.0", tk.END).strip()
-                if notes:
-                    self.db.add_activity_note(activity['name'], notes)
-                
-                messagebox.showinfo(
-                    "Activity Logged",
-                    f"Custom activity '{activity['name']}' logged! You earned {points} points!"
-                )
-                dialog.destroy()
-                self.update_stats()
-                self.update_progress_view()
+        def edit_preview():
+            edit_dialog = tk.Toplevel(dialog)
+            edit_dialog.title("Edit Activity")
+            edit_dialog.geometry("400x400")
 
-        # Configure log button command
-        log_button.config(command=log_previewed_activity)
+            fields = {}
+            
+            ttk.Label(edit_dialog, text="Activity Name:").pack(pady=(10,0))
+            fields['name'] = ttk.Entry(edit_dialog)
+            fields['name'].insert(0, current_preview['activity']['name'])
+            fields['name'].pack(pady=(0,10))
+            
+            ttk.Label(edit_dialog, text="Description:").pack()
+            fields['description'] = tk.Text(edit_dialog, height=3, width=40)
+            fields['description'].insert('1.0', current_preview['activity']['description'])
+            fields['description'].pack(pady=(0,10))
+            
+            ttk.Label(edit_dialog, text="Points:").pack()
+            points_label = ttk.Label(
+                edit_dialog, 
+                text=str(current_preview['activity']['points']),
+                font=('Segoe UI', 10, 'bold')
+            )
+            points_label.pack(pady=(0,10))
+            
+            ttk.Label(edit_dialog, text="Category:").pack()
+            categories = ["mindfulness", "exercise", "reflection", "social", "creative"]
+            fields['category'] = ttk.Combobox(edit_dialog, values=categories)
+            fields['category'].set(current_preview['activity']['category'])
+            fields['category'].pack(pady=(0,10))
+            
+            def save_edits():
+                try:
+                    current_preview['activity'].update({
+                        'name': fields['name'].get(),
+                        'description': fields['description'].get('1.0', tk.END).strip(),
+                        'category': fields['category'].get()
+                    })
+                    
+                    preview_labels['name'].config(text=f"Name: {current_preview['activity']['name']}")
+                    preview_labels['category'].config(text=f"Category: {current_preview['activity']['category']}")
+                    preview_labels['points'].config(text=f"Points: {current_preview['activity']['points']}")
+                    preview_labels['description'].config(text=f"Description: {current_preview['activity']['description']}")
+                    
+                    edit_dialog.destroy()
+                except ValueError as e:
+                    messagebox.showerror("Error", str(e))
+            
+            ttk.Button(edit_dialog, text="Save Changes", command=save_edits).pack(pady=10)
+
+        buttons_frame = ttk.Frame(custom_tab)
+        buttons_frame.pack(pady=5)
 
         preview_button = ttk.Button(
-            custom_tab,
+            buttons_frame,
             text="Preview Activity",
             command=preview_custom_activity
         )
-        preview_button.pack(pady=5)
+        
+        edit_button = ttk.Button(
+            buttons_frame,
+            text="Edit Activity",
+            state='disabled',
+            command=edit_preview
+        )
+        
+        log_button = ttk.Button(
+            buttons_frame,
+            text="Log this Activity",
+            state='disabled'
+        )
 
-        # Notes section
+        # Pack buttons
+        preview_button.pack(side=tk.LEFT, padx=5)
+        edit_button.pack(side=tk.LEFT, padx=5)
+        log_button.pack(side=tk.LEFT, padx=5)
+
         notes_frame = ttk.LabelFrame(dialog, text="Notes (optional)", padding=10)
         notes_frame.pack(fill=tk.X, padx=10, pady=5)
         notes_text = tk.Text(notes_frame, height=3)
         notes_text.pack(fill=tk.X)
 
-        # Add save button for existing activities tab
         def save_existing_activity():
             activity = activity_var.get()
             notes = notes_text.get("1.0", tk.END).strip()
@@ -828,22 +842,50 @@ Available commands:
             command=save_existing_activity
         ).pack(pady=10)
 
+        def log_previewed_activity():
+            activity = current_preview['activity']
+            if activity:
+                activity_id = self.db.add_generated_activity(activity)
+                points = self.db.complete_activity(activity['name'])
+
+                notes = notes_text.get("1.0", tk.END).strip()
+                if notes:
+                    self.db.add_activity_note(activity['name'], notes)
+                
+                messagebox.showinfo(
+                    "Activity Logged",
+                    f"Custom activity '{activity['name']}' logged! You earned {points} points!"
+                )
+                dialog.destroy()
+                self.update_stats()
+                self.update_progress_view()
+
+        log_button.config(command=log_previewed_activity)
+
     def update_progress_view(self):
-        # Get activities and print for debugging
-        week_activities = self.db.get_weekly_activities()
-        print("Weekly activities:", week_activities)
+        today = datetime.now(self.timezone)
+        current_date = today + timedelta(weeks=self.current_week_offset)
+        start_of_week = (current_date - timedelta(days=current_date.weekday()))
+        end_of_week = start_of_week + timedelta(days=6)
+
+        if self.current_week_offset == 0:
+            week_text = "Current Week"
+        else:
+            week_text = f"Week of {start_of_week.strftime('%B %d, %Y')}"
+        self.week_label.config(text=week_text)
+
+        week_activities = self.db.get_activities_for_week(start_of_week)
+        print(f"Showing activities for week: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}")
         
-        # Update calendar cells with proper day mapping
         for i, cell in enumerate(self.calendar_cells):
-            # i is already correct (0=Monday to 6=Sunday)
             day_activities = week_activities.get(i, [])
             if day_activities:
                 cell.configure(
                     text="\n".join(day_activities),
                     background='#e3f2fd'
                 )
-                cell.bind('<Button-1>', lambda e, day=i: self.show_day_details(day))
-                print(f"Cell {i}: {day_activities}")
+                cell.bind('<Button-1>', lambda e, day=i, date=start_of_week+timedelta(days=i): 
+                         self.show_day_details(day, date))
             else:
                 cell.configure(
                     text="No activities",
@@ -851,35 +893,29 @@ Available commands:
                 )
                 cell.unbind('<Button-1>')
 
-        # Update stats
-        total_points = self.db.get_total_points()
-        weekly_count = self.db.get_weekly_activity_count()
-        mood_avg = self.db.get_weekly_mood_average()
-
+        # Update stats for selected week
+        stats = self.db.get_stats_for_week(start_of_week)
         stats_text = f"""
-Weekly Stats:
-• Activities Completed: {weekly_count}
-• Total Points: {total_points}
-• Average Mood: {mood_avg:.2f}
+Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')}):
+• Activities Completed: {stats['activity_count']}
+• Total Points: {stats['points']}
+• Average Mood: {stats['mood_avg']:.2f}
         """
         self.stats_display.configure(text=stats_text)
 
-    def show_day_details(self, day_index):
-        # Close existing popup if any
+    def show_day_details(self, day_index, selected_date=None):
         if self.detail_popup:
             self.detail_popup.destroy()
 
-        # Calculate date for the selected day in IST
-        today = datetime.now(self.timezone)
-        start_of_week = (today - timedelta(days=today.weekday())).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        selected_date = start_of_week + timedelta(days=day_index)
+        if selected_date is None:
+            today = datetime.now(self.timezone)
+            start_of_week = (today - timedelta(days=today.weekday())).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            selected_date = start_of_week + timedelta(days=day_index)
         
         print(f"Showing details for: {selected_date.strftime('%Y-%m-%d %H:%M:%S %Z')}")
         
-        # Rest of the method remains the same
-        # Create popup window
         self.detail_popup = tk.Toplevel(self.root)
         self.detail_popup.title(f"Activities for {selected_date.strftime('%A, %B %d')}")
         self.detail_popup.geometry("500x400")
@@ -916,7 +952,6 @@ Weekly Stats:
         scrollbar.pack(side="right", fill="y")
 
     def create_activity_detail_card(self, parent, activity, date):
-        # Create card frame
         card = ttk.LabelFrame(
             parent,
             text=activity['name'],
@@ -924,12 +959,9 @@ Weekly Stats:
         )
         card.pack(fill=tk.X, pady=5)
 
-        # Activity details
         details = ttk.Frame(card)
         details.pack(fill=tk.X)
 
-        # Time and category
-        # Convert timestamp to IST for display
         activity_time = datetime.fromisoformat(activity['timestamp'])
         if not activity_time.tzinfo:
             activity_time = self.timezone.localize(activity_time)
@@ -981,8 +1013,20 @@ Weekly Stats:
             command=confirm_delete
         ).pack(anchor=tk.E, pady=(5, 0))
 
+    def previous_week(self):
+        self.current_week_offset -= 1
+        self.update_progress_view()
+    def next_week(self):
+        if self.current_week_offset < 0:  # cant go future than current week
+            self.current_week_offset += 1
+            self.update_progress_view()
+
+    def goto_current_week(self):
+        self.current_week_offset = 0
+        self.update_progress_view()
+
 if __name__ == "__main__": 
-    root = tk.Tk()
+    root = tk.Tk()    
     app = MentalHealthApp(root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
     root.mainloop()

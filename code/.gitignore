@@ -1,0 +1,6 @@
+__pycache__/
+database.db
+dist/
+build/
+nltk_data/
+*.spec

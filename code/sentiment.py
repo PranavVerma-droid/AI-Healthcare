@@ -2,19 +2,19 @@ from textblob import TextBlob # type: ignore
 import nltk
 from typing import Tuple
 from ollama import Client # type: ignore
+from config import OLLAMA_HOST, AI_MODEL
 
 class SentimentAnalyzer:
     def __init__(self):
-        # Download required NLTK data
         try:
             nltk.data.find('vader_lexicon')
         except LookupError:
             nltk.download('vader_lexicon')
-        self.client = Client(host='http://localhost:11434')
-        self.model = "qwen2.5:3b"
+        self.client = Client(host=OLLAMA_HOST)
+        self.model = AI_MODEL
 
     def analyze_sentiment(self, text: str) -> Tuple[float, str, float]:
-        # Get AI analysis of emotional state
+
         messages = [{
             "role": "system",
             "content": """Analyze the emotional state in this message. 
@@ -32,11 +32,9 @@ class SentimentAnalyzer:
             response = self.client.chat(model=self.model, messages=messages)
             content = response['message']['content']
             
-            # Extract values from response
             import json
             import re
             
-            # Find JSON object in response
             json_match = re.search(r'{.*}', content)
             if json_match:
                 analysis = json.loads(json_match.group())
