@@ -2,6 +2,9 @@
 
 <img src="images/UI.png">
 
+This project is a submission for the Excelerate CodeMaster Solo's Competition (2025). <br>
+https://4excelerate.org
+
 ## My Idea: AI-Powered Mental Health App
 
 Problem: Mental health issues are often overlooked due to stigma or lack of awareness.<br>
@@ -25,8 +28,8 @@ Currently, this app is being powered by AI (Ollama), that is being hosted by me.
   - ```ollama pull qwen2.5:3b```
 - Start Ollama.
 - Then, Create a Python Virtual Env. Follow these Commands:
-  - ```git clone https://github.com/PranavVerma-droid/SLU```
-  - ```cd SLU```
+  - ```git clone https://github.com/PranavVerma-droid/AI-Healthcare```
+  - ```cd AI-Healthcare```
   - ```python -m venv venv```
   - ```venv/Scripts/Activate.ps1```
 - After that is done, install the dependencies:

@@ -72,7 +72,7 @@ class AIHelper:
             # Add current message with enhanced context
             messages.append({
                 "role": "system",
-                "content": f"""You are Stacy, a friendly and empathetic emotional AI Healthcare Assistant.
+                "content": f"""You are Stacy, a friendly and empathetic emotional AI Healthcare Assistant created by Pranav Verma.
                 {daily_context}
                 {activity_context}
                 Guidelines:
