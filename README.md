@@ -4,10 +4,8 @@
 
 Watch the demo video to understand how the AI Healthcare Assistant works:
 
-<video width="600" controls>
-  <source src="./images/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/a608bb12-4765-454c-ad9a-dd01eaa4a302
+
 
 This project is a submission for the Excelerate CodeMaster Solo's Competition (2025). <br>
 https://4excelerate.org
