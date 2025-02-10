@@ -101,7 +101,7 @@ def generate_sample_data():
     current_date = start_date
     
     # Clear existing data
-    cursor.execute('DELETE FROM mood_tracking')  # Changed from mood_entries
+    cursor.execute('DELETE FROM mood_tracking')
     cursor.execute('DELETE FROM user_progress')
     cursor.execute('DELETE FROM chat_history')
     

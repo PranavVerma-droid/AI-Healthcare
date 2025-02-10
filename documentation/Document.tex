@@ -1,0 +1,268 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{geometry}
+
+\geometry{
+    a4paper,
+    margin=2.5cm
+}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{AI Healthcare Assistant\\Project Documentation}
+\author{Project Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Objectives}
+
+\subsection{Problem Statement}
+Mental health support remains inaccessible to many due to various barriers including cost, stigma, and availability of professional help. Traditional mental health services often have long waiting times and high costs, while existing digital solutions may lack personalization and engagement.
+
+In today's fast-paced world, many individuals struggle to access mental health support when they need it most. Common barriers include:
+\begin{itemize}
+    \item High costs of professional therapy sessions
+    \item Long waiting times for appointments
+    \item Stigma associated with seeking mental health support
+    \item Lack of privacy in traditional settings
+    \item Limited availability of mental health professionals
+    \item Difficulty in tracking mental well-being consistently
+\end{itemize}
+
+The AI Healthcare Assistant addresses these challenges by providing an innovative, accessible, and private platform for mental health support and wellness tracking.
+
+\subsection{Goals}
+The project aims to achieve the following specific objectives:
+
+\begin{itemize}
+    \item \textbf{AI-Powered Support}: Create an intelligent conversational interface that provides 24/7 emotional support and guidance using the Qwen 2.5 language model
+    \item \textbf{Mood Tracking}: Implement sophisticated sentiment analysis to track user moods over time and provide personalized insights
+    \item \textbf{Engagement Through Gamification}: Develop an engaging activity system that motivates users through points and achievements
+    \item \textbf{Progress Visualization}: Offer clear visual representations of mood trends and activity completion
+    \item \textbf{Privacy-First Approach}: Ensure all user data remains local and secure
+\end{itemize}
+
+\section{System Architecture}
+
+\subsection{Overview}
+The AI Healthcare Assistant is built using a modular architecture that ensures maintainability, scalability, and robust performance. The system consists of four main components:
+
+\begin{itemize}
+    \item \textbf{Frontend Interface}: Built with CustomTkinter for a modern, responsive GUI
+    \item \textbf{AI Engine}: Powered by Ollama and Qwen 2.5 model for natural language processing
+    \item \textbf{Database Layer}: SQLite-based persistent storage with thread-safe operations
+    \item \textbf{Analytics Module}: Real-time sentiment analysis and mood tracking
+\end{itemize}
+
+\subsection{Component Details}
+
+\subsubsection{Frontend Interface}
+The user interface is designed with accessibility and ease of use in mind:
+
+\begin{itemize}
+    \item \textbf{Chat Interface}: 
+    \begin{itemize}
+        \item Clean, intuitive chat window for AI interaction
+        \item Real-time message updates with sentiment indicators
+        \item Command system for quick actions (e.g., /help, /stats)
+        \item Visual feedback for mood changes
+    \end{itemize}
+    
+    \item \textbf{Activity Dashboard}:
+    \begin{itemize}
+        \item Dynamic activity cards based on current mood
+        \item Progress tracking with points visualization
+        \item Category-based activity organization
+        \item Quick-complete functionality
+    \end{itemize}
+    
+    \item \textbf{Progress Tracking}:
+    \begin{itemize}
+        \item Weekly calendar view of completed activities
+        \item Mood trend visualization using Matplotlib
+        \item Points and achievements display
+        \item Detailed activity logs
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{AI Engine}
+The AI component utilizes advanced natural language processing:
+
+\begin{itemize}
+    \item \textbf{Conversation Management}:
+    \begin{itemize}
+        \item Context-aware responses using conversation history
+        \item Dynamic prompt engineering for consistent personality
+        \item Fallback mechanisms for handling errors
+        \item Integration with activity and mood data
+    \end{itemize}
+    
+    \item \textbf{Activity Generation}:
+    \begin{itemize}
+        \item Mood-based activity suggestions
+        \item Category-specific recommendations
+        \item Dynamic point allocation
+        \item Personalization based on user history
+    \end{itemize}
+\end{itemize}
+
+\section{Implementation Details}
+
+\subsection{Database Schema}
+The application uses a carefully designed SQLite database schema:
+
+\begin{itemize}
+    \item \textbf{chat\_history}: Stores all user-AI interactions with timestamps
+    \item \textbf{mood\_tracking}: Records mood scores and temporal data
+    \item \textbf{activities}: Contains available activities and their attributes
+    \item \textbf{user\_progress}: Tracks completed activities and points
+    \item \textbf{activity\_notes}: Stores user notes for completed activities
+\end{itemize}
+
+\subsection{Key Features}
+
+\subsubsection{Sentiment Analysis System}
+The sentiment analysis system combines multiple approaches:
+
+\begin{itemize}
+    \item Primary AI-based analysis using the Qwen 2.5 model
+    \item Backup analysis using TextBlob for redundancy
+    \item Weighted mood impact calculation
+    \item Mood trend analysis and visualization
+    \item Integration with activity recommendations
+\end{itemize}
+
+\subsubsection{Activity Management}
+The activity system is designed to promote engagement:
+
+\begin{itemize}
+    \item \textbf{Categories}: mindfulness, exercise, reflection, social, creative
+    \item \textbf{Points System}: 5-30 points per activity based on complexity
+    \item \textbf{Custom Activities}: User-defined activities with AI categorization
+    \item \textbf{Progress Tracking}: Daily and weekly activity visualization
+\end{itemize}
+
+\subsubsection{Meditation Timer}
+A dedicated meditation feature includes:
+
+\begin{itemize}
+    \item Customizable session durations
+    \item Post-meditation mood tracking
+    \item Points rewards based on duration
+    \item Session history and statistics
+\end{itemize}
+
+\section{Technical Challenges and Solutions}
+
+\subsection{AI Response Management}
+\subsubsection{Challenge}
+Ensuring consistent and contextually appropriate AI responses while maintaining conversation history and mood context.
+
+\subsubsection{Solution}
+\begin{itemize}
+    \item Implemented custom prompt engineering
+    \item Created context management system
+    \item Added fallback mechanisms for AI failures
+\end{itemize}
+
+\subsection{Real-time Data Synchronization}
+\subsubsection{Challenge}
+Managing concurrent database operations while maintaining UI responsiveness.
+
+\subsubsection{Solution}
+\begin{itemize}
+    \item Implemented thread-local storage
+    \item Created connection pooling system
+    \item Used asynchronous updates for UI elements
+\end{itemize}
+
+\subsection{Mood Analysis Integration}
+\subsubsection{Challenge}
+Accurately analyzing user sentiment and maintaining consistent mood tracking.
+
+\subsubsection{Solution}
+\begin{itemize}
+    \item Combined AI-based and traditional sentiment analysis
+    \item Implemented weighted mood impact system
+    \item Created visualization for mood trends
+\end{itemize}
+
+\section{User Guide}
+
+\subsection{Basic Usage}
+The application offers several key features:
+
+\begin{itemize}
+    \item \textbf{Chat Interface}: Start conversations with the AI assistant
+    \item \textbf{Activity Tab}: View and complete suggested activities
+    \item \textbf{Progress Tab}: Track your wellness journey
+    \item \textbf{Meditation Tab}: Practice mindfulness with guided sessions
+\end{itemize}
+
+\subsection{Commands}
+Available chat commands include:
+
+\begin{itemize}
+    \item \texttt{/help}: Display available commands
+    \item \texttt{/stats}: Show weekly progress
+    \item \texttt{/activities}: List available activities
+    \item \texttt{/mood}: Display current mood status
+\end{itemize}
+
+\section{Future Enhancements}
+
+\subsection{Planned Features}
+\begin{itemize}
+    \item Wearable device integration
+    \item Advanced pattern recognition
+    \item Group support features
+    \item Mobile application
+    \item Professional dashboard
+\end{itemize}
+
+\subsection{Scalability Considerations}
+\begin{itemize}
+    \item Cloud synchronization options
+    \item Multi-platform support
+    \item API development for extensions
+    \item Enhanced security features
+\end{itemize}
+
+\section{Conclusion}
+The AI Healthcare Assistant demonstrates the potential of combining artificial intelligence with mental health support. By providing accessible, engaging, and personalized support, it addresses critical gaps in mental health care delivery while maintaining user privacy and encouraging regular wellness practices.
+
+\end{document}

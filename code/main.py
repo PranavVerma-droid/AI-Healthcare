@@ -392,9 +392,9 @@ class MentalHealthApp:
 
     def cmd_clear(self):
         self.db.clear_history()
-        self.chat_area.configure(state='normal')  # Changed from config to configure
+        self.chat_area.configure(state='normal')
         self.chat_area.delete('1.0', tk.END)
-        self.chat_area.configure(state='disabled')  # Changed from config to configure
+        self.chat_area.configure(state='disabled')
         self.display_message("System: Chat history cleared.", 'system')
 
     def cmd_exit(self):
@@ -488,7 +488,7 @@ Available commands:
             
         self.chat_area.insert(tk.END, message + "\n", msg_type)
         self.chat_area.see(tk.END)
-        self.chat_area.configure(state='disabled')  # Changed from config to configure
+        self.chat_area.configure(state='disabled')
 
     def update_stats(self):
         points = self.db.get_total_points()
@@ -504,13 +504,13 @@ Available commands:
         daily_mood = self.db.get_daily_mood_average()
         weekly_mood = self.db.get_weekly_mood_average()
         
-        self.mood_labels['today'].configure(  # Changed from config to configure
+        self.mood_labels['today'].configure(
             text=f"Today's Mood: {daily_mood:.2f} ({self._get_mood_message(daily_mood)})",
-            text_color=self._get_mood_color(daily_mood)  # Changed from foreground to text_color
+            text_color=self._get_mood_color(daily_mood)
         )
-        self.mood_labels['week'].configure(  # Changed from config to configure
+        self.mood_labels['week'].configure( 
             text=f"Weekly Mood: {weekly_mood:.2f} ({self._get_mood_message(weekly_mood)})",
-            text_color=self._get_mood_color(weekly_mood)  # Changed from foreground to text_color
+            text_color=self._get_mood_color(weekly_mood) 
         )
         
         self.update_mood_trend()
@@ -1242,7 +1242,6 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
         self.update_progress_view()
 
 if __name__ == "__main__": 
-    # Change from tk.Tk() to ctk.CTk()
     root = ctk.CTk()    
     app = MentalHealthApp(root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)

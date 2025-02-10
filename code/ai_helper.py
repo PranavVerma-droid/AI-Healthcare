@@ -9,6 +9,7 @@ class AIHelper:
         self.model = AI_MODEL
         self.db = None
 
+    # Set the database.
     def set_database(self, db):
         self.db = db
 
@@ -86,13 +87,13 @@ class AIHelper:
             })
             messages.append({"role": "user", "content": user_input})
 
-            # Get response using official client
+            # Get response using ollama
             response = self.client.chat(
                 model=self.model,
                 messages=messages
             )
 
-            # Extract content from response dictionary
+            # Extract content
             if isinstance(response, dict) and 'message' in response:
                 return response['message'].get('content', 'No response content')
             else:
@@ -106,9 +107,9 @@ class AIHelper:
             mood_type = "low" if mood_score < 0.3 else "neutral" if mood_score < 0.7 else "positive"
             recent = ""
             if recent_activities and isinstance(recent_activities, (list, tuple)):
-                # Convert all items to strings and join
                 recent = "\nRecently completed activities: " + ", ".join(str(act) for act in recent_activities)
 
+            # Activity Generation Template
             messages = [{
                 "role": "system",
                 "content": """You are an AI assistant that generates mental health activities. 
@@ -184,6 +185,7 @@ class AIHelper:
 
     def parse_custom_activity(self, description: str):
         try:
+            # User's Custom Activity Generator
             messages = [{
                 "role": "system",
                 "content": """You are an AI that categorizes and scores mental health activities.
@@ -232,6 +234,7 @@ class AIHelper:
             print(f"Error parsing custom activity: {e}")
             return None
 
+    # Fallback activities (default incase the AI does not work)
     def _get_fallback_activities(self, mood_type):
         """Provide fallback activities if AI generation fails"""
         fallbacks = {

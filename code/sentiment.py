@@ -18,6 +18,7 @@ class SentimentAnalyzer:
 
     def analyze_sentiment(self, text: str) -> Tuple[float, str, float]:
 
+        # Analysis Template
         messages = [{
             "role": "system",
             "content": """Analyze the emotional state in this message. 

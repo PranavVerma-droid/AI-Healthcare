@@ -19,7 +19,7 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Chat history table - fixed syntax error
+        # Chat history table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS chat_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +82,7 @@ class Database:
         conn.close()
 
     def _init_default_activities(self, cursor):
+        # Fallback default activities
         default_activities = [
             ('Deep Breathing', 'Practice deep breathing for 5 minutes', 10, 'mindfulness'),
             ('Gratitude Journal', 'Write down 3 things you are grateful for', 15, 'reflection'),
