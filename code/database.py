@@ -19,14 +19,14 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Chat history table
+        # Chat history table - fixed syntax error
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS chat_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT,
-                user_message TEXT,
-                ai_response TEXT,
-                sentiment REAL
+                message TEXT,
+                response TEXT,
+                sentiment_score REAL
             )
         ''')
         
@@ -106,7 +106,7 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO chat_history (timestamp, user_message, ai_response, sentiment)
+            INSERT INTO chat_history (timestamp, message, response, sentiment_score)
             VALUES (?, ?, ?, ?)
         ''', (self._get_current_time().isoformat(), user_message, ai_response, sentiment))
         conn.commit()
@@ -115,7 +115,7 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT timestamp, user_message, ai_response
+            SELECT timestamp, message, response
             FROM chat_history
             ORDER BY timestamp DESC
             LIMIT ?
@@ -132,7 +132,7 @@ class Database:
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT timestamp, user_message, ai_response
+            SELECT timestamp, message, response
             FROM chat_history
             ORDER BY timestamp ASC
         ''')

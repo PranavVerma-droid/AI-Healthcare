@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+import customtkinter as ctk  # type: ignore
+from tkinter import messagebox, scrolledtext
 from ai_helper import AIHelper
 from database import Database
 from sentiment import SentimentAnalyzer
@@ -13,17 +14,17 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np 
 import pytz  # type: ignore
+import time
 
 class MentalHealthApp:
     def __init__(self, root):
         self.root = root
+        ctk.set_appearance_mode("system")
+        ctk.set_default_color_theme("dark-blue")
+        
         self.root.title("Stacy - AI Mental Health Assistant")
         self.root.geometry("1000x700")
         
-        self.style = ttk.Style()
-        self.style.theme_use('vista')
-        #self.style.theme_use('clam')
-
         self.db = Database()
         self.ai_helper = AIHelper()
         self.ai_helper.set_database(self.db)
@@ -35,18 +36,9 @@ class MentalHealthApp:
         self.detail_popup = None
         self.timezone = pytz.timezone('Asia/Kolkata')
         self.current_week_offset = 0
-        
-        self.style.configure('Send.TButton', 
-                           padding=10, 
-                           font=('Segoe UI', 10))
-        self.style.configure('Chat.TFrame', 
-                           background='#f0f0f0')
-        self.style.configure('Input.TEntry', 
-                           padding=5, 
-                           font=('Segoe UI', 11))
-        self.style.configure('Today.TButton', 
-                           padding=5,
-                           font=('Segoe UI', 9))
+        self.meditation_timer = None
+        self.meditation_start_time = None
+        self.meditation_duration = 0
         
         self.create_gui()
         self.update_stats()
@@ -66,47 +58,49 @@ class MentalHealthApp:
         signal.signal(signal.SIGTERM, self._signal_handler)
 
     def create_gui(self):
-        main_container = ttk.Frame(self.root, style='Chat.TFrame')
+        main_container = ctk.CTkFrame(self.root)
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        self.notebook = ttk.Notebook(main_container)
+        self.notebook = ctk.CTkTabview(main_container)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
-        self.chat_tab = ttk.Frame(self.notebook)
-        self.activities_tab = ttk.Frame(self.notebook)
-        self.progress_tab = ttk.Frame(self.notebook)
-
-        self.notebook.add(self.chat_tab, text="Chat with Stacy")
-        self.notebook.add(self.activities_tab, text="Daily Activities")
-        self.notebook.add(self.progress_tab, text="Weekly Progress")
+        self.chat_tab = self.notebook.add("Chat with Stacy")
+        self.activities_tab = self.notebook.add("Daily Activities")  
+        self.progress_tab = self.notebook.add("Weekly Progress")
+        self.meditation_tab = self.notebook.add("Meditation")
 
         self.setup_chat_tab()
         self.setup_activities_tab()
         self.setup_progress_tab()
+        self.setup_meditation_tab()
 
     def setup_chat_tab(self):
-        title_frame = ttk.Frame(self.chat_tab)
+        title_frame = ctk.CTkFrame(self.chat_tab)
         title_frame.pack(fill=tk.X, pady=(0, 20))
         
-        title_label = ttk.Label(title_frame, 
-                               text="💭 Chat with Stacy", 
-                               font=('Segoe UI', 16, 'bold'))
+        title_label = ctk.CTkLabel(
+            title_frame, 
+            text="💭 Chat with Stacy", 
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
         title_label.pack(side=tk.LEFT)
         
-        self.status_label = ttk.Label(title_frame, 
-                                     text="● Online", 
-                                     font=('Segoe UI', 10),
-                                     foreground='green')
+        self.status_label = ctk.CTkLabel(
+            title_frame, 
+            text="● Online", 
+            text_color="green",
+            font=ctk.CTkFont(size=10)
+        )
         self.status_label.pack(side=tk.RIGHT)
 
-        chat_frame = ttk.Frame(self.chat_tab, style='Chat.TFrame')
+        chat_frame = ctk.CTkFrame(self.chat_tab)
         chat_frame.pack(fill=tk.BOTH, expand=True)
         
         self.chat_area = scrolledtext.ScrolledText(
             chat_frame,
             wrap=tk.WORD,
             font=('Segoe UI', 10),
-            background='#ffffff',
+            bg='#ffffff',
             borderwidth=1,
             relief="solid",
             padx=10,
@@ -128,150 +122,154 @@ class MentalHealthApp:
                                    font=('Segoe UI', 9, 'italic'))
 
         # Input area
-        input_frame = ttk.Frame(self.chat_tab)
+        input_frame = ctk.CTkFrame(self.chat_tab)
         input_frame.pack(fill=tk.X, pady=(20, 0))
         
-        self.message_input = ttk.Entry(
+        self.message_input = ctk.CTkEntry(
             input_frame,
-            style='Input.TEntry',
-            font=('Segoe UI', 11)
+            placeholder_text="Type your message here...",
+            font=ctk.CTkFont(size=11),
+            height=40
         )
         self.message_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         
-        send_button = ttk.Button(
+        send_button = ctk.CTkButton(
             input_frame,
             text="Send Message",
-            style='Send.TButton',
-            command=self.send_message
+            font=ctk.CTkFont(size=11),
+            command=self.send_message,
+            width=120,
+            height=40
         )
         send_button.pack(side=tk.RIGHT)
 
-        help_label = ttk.Label(
+        help_label = ctk.CTkLabel(
             self.chat_tab,
             text="Type /help for available commands",
-            font=('Segoe UI', 9),
-            foreground='#666666'
+            font=ctk.CTkFont(size=9),
+            text_color="gray"
         )
         help_label.pack(pady=(10, 0))
         
-        stats_frame = ttk.LabelFrame(self.chat_tab, text="Progress & Stats", padding=10)
-        stats_frame.pack(fill=tk.X, pady=(0, 10))
+        stats_frame = ctk.CTkFrame(self.chat_tab)
+        stats_frame.pack(fill=tk.X, pady=(20, 10))
         
-        self.points_label = ttk.Label(stats_frame, text="Points: 0")
-        self.points_label.pack(side=tk.LEFT, padx=5)
+        self.points_label = ctk.CTkLabel(stats_frame, text="Points: 0")
+        self.points_label.pack(side=tk.LEFT, padx=15)
         
-        self.mood_label = ttk.Label(stats_frame, text="Weekly Mood: N/A")
-        self.mood_label.pack(side=tk.LEFT, padx=5)
+        self.mood_label = ctk.CTkLabel(stats_frame, text="Weekly Mood: N/A")
+        self.mood_label.pack(side=tk.LEFT, padx=15)
         
-        self.streak_label = ttk.Label(stats_frame, text="Activities completed: 0")
-        self.streak_label.pack(side=tk.LEFT, padx=5)
+        self.streak_label = ctk.CTkLabel(stats_frame, text="Activities completed: 0")
+        self.streak_label.pack(side=tk.LEFT, padx=15)
 
         self.message_input.bind("<Return>", lambda e: self.send_message())
         self.display_message("Hello! I'm Stacy, your AI mental health assistant. How are you feeling today?", 'assistant')
 
     def setup_activities_tab(self):
-        self.style.configure('Completed.TLabelframe', 
-                           background='#e8f5e9')
+        self.activities_frame = ctk.CTkFrame(self.activities_tab)
+        self.activities_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
-        ttk.Label(
-            self.activities_tab,
-            text=f"Hello {self.username}!",
-            font=('Segoe UI', 16, 'bold')
-        ).pack(pady=10)
-
-        self.activities_frame = ttk.Frame(self.activities_tab)
-        self.activities_frame.pack(fill=tk.BOTH, expand=True, padx=20)
-
-        controls_frame = ttk.Frame(self.activities_tab)
+        controls_frame = ctk.CTkFrame(self.activities_tab)
         controls_frame.pack(fill=tk.X, padx=20, pady=10)
 
-        ttk.Button(
+        generate_button = ctk.CTkButton(
             controls_frame,
             text="Generate New Activities",
             command=self.generate_new_activities
-        ).pack(side=tk.LEFT, padx=5)
+        )
+        generate_button.pack(side=tk.LEFT, padx=5)
 
         self.auto_refresh_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
+        auto_refresh_check = ctk.CTkCheckBox(
             controls_frame,
             text="Auto-refresh when completed",
             variable=self.auto_refresh_var
-        ).pack(side=tk.LEFT, padx=5)
+        )
+        auto_refresh_check.pack(side=tk.LEFT, padx=5)
 
         self.refresh_activities()
 
     def setup_progress_tab(self):
-        progress_header = ttk.Frame(self.progress_tab)
+        progress_header = ctk.CTkFrame(self.progress_tab)
         progress_header.pack(fill=tk.X, padx=20, pady=10)
 
-        ttk.Label(
+        progress_label = ctk.CTkLabel(
             progress_header,
             text="Weekly Progress Tracker",
-            font=('Segoe UI', 16, 'bold')
-        ).pack(side=tk.LEFT)
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        progress_label.pack(side=tk.LEFT)
 
-        nav_frame = ttk.Frame(progress_header)
+        nav_frame = ctk.CTkFrame(progress_header)
         nav_frame.pack(side=tk.RIGHT)
 
-        ttk.Button(
+        prev_week_button = ctk.CTkButton(
             nav_frame,
             text="← Previous Week",
             command=self.previous_week
-        ).pack(side=tk.LEFT, padx=5)
+        )
+        prev_week_button.pack(side=tk.LEFT, padx=5)
 
-        self.week_label = ttk.Label(
+        self.week_label = ctk.CTkLabel(
             nav_frame,
             text="Current Week",
-            font=('Segoe UI', 10)
+            font=ctk.CTkFont(size=10)
         )
         self.week_label.pack(side=tk.LEFT, padx=10)
 
-        ttk.Button(
+        next_week_button = ctk.CTkButton(
             nav_frame,
             text="Next Week →",
             command=self.next_week
-        ).pack(side=tk.LEFT, padx=5)
+        )
+        next_week_button.pack(side=tk.LEFT, padx=5)
 
-        ttk.Button(
+        today_button = ctk.CTkButton(
             nav_frame,
             text="Today",
-            style='Today.TButton',
             command=self.goto_current_week
-        ).pack(side=tk.LEFT, padx=(15, 5))
+        )
+        today_button.pack(side=tk.LEFT, padx=(15, 5))
 
-        calendar_frame = ttk.LabelFrame(self.progress_tab, text="Activity Log", padding=10)
+        calendar_frame = ctk.CTkFrame(self.progress_tab)
         calendar_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         self.calendar_cells = []
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         
         for i, day in enumerate(days):
-            ttk.Label(calendar_frame, text=day).grid(row=0, column=i, padx=5, pady=5)
-            cell = ttk.Label(calendar_frame, 
-                           text="No activities",
-                           background='white',
-                           padding=10)
+            day_label = ctk.CTkLabel(calendar_frame, text=day)
+            day_label.grid(row=0, column=i, padx=5, pady=5)
+            cell = ctk.CTkLabel(
+                calendar_frame, 
+                text="No activities", 
+                bg_color='white', 
+                padx=10, 
+                pady=10
+            )
             cell.grid(row=1, column=i, padx=5, pady=5, sticky='nsew')
             self.calendar_cells.append(cell)
 
-        log_frame = ttk.Frame(self.progress_tab)
+        log_frame = ctk.CTkFrame(self.progress_tab)
         log_frame.pack(fill=tk.X, padx=20, pady=10)
 
-        ttk.Button(
+        log_button = ctk.CTkButton(
             log_frame,
             text="Log Activity",
             command=self.show_log_activity_dialog
-        ).pack(side=tk.LEFT)
+        )
+        log_button.pack(side=tk.LEFT)
 
-        self.stats_display = ttk.Label(
+        self.stats_display = ctk.CTkLabel(
             self.progress_tab,
             text="",
-            font=('Segoe UI', 11),
+            font=ctk.CTkFont(size=11),
             justify=tk.LEFT
         )
         self.stats_display.pack(pady=10)
 
-        mood_frame = ttk.LabelFrame(self.progress_tab, text="Mood Trend", padding=10)
+        mood_frame = ctk.CTkFrame(self.progress_tab)
         mood_frame.pack(fill=tk.X, padx=20, pady=10)
 
         self.fig = Figure(figsize=(8, 2), dpi=100)
@@ -280,10 +278,10 @@ class MentalHealthApp:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.X)
 
-        today_mood = ttk.Label(
+        today_mood = ctk.CTkLabel(
             mood_frame,
             text="Today's Mood: N/A",
-            font=('Segoe UI', 10, 'bold')
+            font=ctk.CTkFont(size=10, weight="bold")
         )
         today_mood.pack(pady=5)
 
@@ -294,6 +292,98 @@ class MentalHealthApp:
 
         self.update_progress_view()
 
+    def setup_meditation_tab(self):
+        title_frame = ctk.CTkFrame(self.meditation_tab)
+        title_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        title_label = ctk.CTkLabel(
+            title_frame, 
+            text="🧘 Meditation Timer", 
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        title_label.pack(side=tk.LEFT)
+
+        # Timer settings
+        settings_frame = ctk.CTkFrame(self.meditation_tab)
+        settings_frame.pack(pady=20)
+
+        ctk.CTkLabel(
+            settings_frame,
+            text="Set Timer Duration (minutes):",
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=5)
+
+        duration_frame = ctk.CTkFrame(settings_frame)
+        duration_frame.pack()
+
+        durations = ["5", "10", "15", "20", "30"]
+        self.duration_var = tk.StringVar(value="5")
+        
+        for duration in durations:
+            ctk.CTkRadioButton(
+                duration_frame,
+                text=f"{duration} min",
+                variable=self.duration_var,
+                value=duration
+            ).pack(side=tk.LEFT, padx=10, pady=10)
+
+        # Timer display
+        self.timer_label = ctk.CTkLabel(
+            self.meditation_tab,
+            text="00:00",
+            font=ctk.CTkFont(size=48, weight="bold")
+        )
+        self.timer_label.pack(pady=30)
+
+        # Control buttons
+        self.start_button = ctk.CTkButton(
+            self.meditation_tab,
+            text="Start Meditation",
+            command=self.start_meditation,
+            font=ctk.CTkFont(size=14),
+            width=200,
+            height=40
+        )
+        self.start_button.pack(pady=10)
+
+        self.stop_button = ctk.CTkButton(
+            self.meditation_tab,
+            text="End Session",
+            command=self.stop_meditation,
+            font=ctk.CTkFont(size=14),
+            width=200,
+            height=40,
+            fg_color="red",
+            hover_color="darkred",
+            state="disabled"
+        )
+        self.stop_button.pack(pady=10)
+
+        # Tips
+        tips_frame = ctk.CTkFrame(self.meditation_tab)
+        tips_frame.pack(fill=tk.X, padx=20, pady=20)
+        
+        ctk.CTkLabel(
+            tips_frame,
+            text="Meditation Tips:",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(pady=5)
+        
+        tips = [
+            "Find a quiet, comfortable place",
+            "Sit in a relaxed but alert position",
+            "Focus on your breath",
+            "Let thoughts come and go without judgment",
+            "Start with short sessions and gradually increase"
+        ]
+        
+        for tip in tips:
+            ctk.CTkLabel(
+                tips_frame,
+                text=f"• {tip}",
+                font=ctk.CTkFont(size=11)
+            ).pack(anchor=tk.W, padx=20, pady=2)
+
     def handle_command(self, cmd):
         if cmd in self.commands:
             self.commands[cmd]()
@@ -302,9 +392,9 @@ class MentalHealthApp:
 
     def cmd_clear(self):
         self.db.clear_history()
-        self.chat_area.config(state='normal')  # Enable editing
+        self.chat_area.configure(state='normal')  # Changed from config to configure
         self.chat_area.delete('1.0', tk.END)
-        self.chat_area.config(state='disabled')  # Disable editing
+        self.chat_area.configure(state='disabled')  # Changed from config to configure
         self.display_message("System: Chat history cleared.", 'system')
 
     def cmd_exit(self):
@@ -349,7 +439,7 @@ Available commands:
 
         self.display_message(user_message, 'user')
         self.message_input.delete(0, tk.END)
-        self.message_input.config(state='disabled')
+        self.message_input.configure(state='disabled')
         threading.Thread(target=self.get_ai_response, args=(user_message,), daemon=True).start()
 
     def get_ai_response(self, user_message):
@@ -381,13 +471,13 @@ Available commands:
             mood_color = self._get_mood_color(self.current_mood)
             self.display_message(f"〉 {change_text} ({self.current_mood:.2f})", 'system')
         
-        self.message_input.config(state='normal')
+        self.message_input.configure(state='normal')
         self.db.add_chat_entry(user_message, ai_response, sentiment_score)
         self.db.add_mood_entry(self.current_mood)
         self.update_stats()
 
     def display_message(self, message, msg_type='system'):
-        self.chat_area.config(state='normal')
+        self.chat_area.configure(state='normal')  # Changed from config to configure
         self.chat_area.insert(tk.END, "\n", msg_type)
         if msg_type == 'user':
             message = "You: " + message
@@ -398,29 +488,29 @@ Available commands:
             
         self.chat_area.insert(tk.END, message + "\n", msg_type)
         self.chat_area.see(tk.END)
-        self.chat_area.config(state='disabled')
+        self.chat_area.configure(state='disabled')  # Changed from config to configure
 
     def update_stats(self):
         points = self.db.get_total_points()
         mood_avg = self.db.get_weekly_mood_average()
         progress = self.db.get_weekly_progress()
         
-        self.points_label.config(text=f"Points: {points}")
-        self.mood_label.config(text=f"Weekly Mood: {mood_avg:.2f}")
+        self.points_label.configure(text=f"Points: {points}")
+        self.mood_label.configure(text=f"Weekly Mood: {mood_avg:.2f}")
         if progress:
             activities_completed = sum(count for _, count, _ in progress)
-            self.streak_label.config(text=f"Activities completed: {activities_completed}")
+            self.streak_label.configure(text=f"Activities completed: {activities_completed}")
         
         daily_mood = self.db.get_daily_mood_average()
         weekly_mood = self.db.get_weekly_mood_average()
         
-        self.mood_labels['today'].config(
+        self.mood_labels['today'].configure(  # Changed from config to configure
             text=f"Today's Mood: {daily_mood:.2f} ({self._get_mood_message(daily_mood)})",
-            foreground=self._get_mood_color(daily_mood)
+            text_color=self._get_mood_color(daily_mood)  # Changed from foreground to text_color
         )
-        self.mood_labels['week'].config(
+        self.mood_labels['week'].configure(  # Changed from config to configure
             text=f"Weekly Mood: {weekly_mood:.2f} ({self._get_mood_message(weekly_mood)})",
-            foreground=self._get_mood_color(weekly_mood)
+            text_color=self._get_mood_color(weekly_mood)  # Changed from foreground to text_color
         )
         
         self.update_mood_trend()
@@ -489,21 +579,23 @@ Available commands:
             self.display_message(f"• {name} ({points} points) - {desc}", 'system')
 
     def cmd_complete(self):
-        dialog = tk.Toplevel(self.root)
+        dialog = ctk.CTkToplevel(self.root)
         dialog.title("Complete Activity")
         dialog.geometry("300x200")
+        dialog.lift()
+        dialog.focus_force()
         
-        ttk.Label(dialog, text="Select activity to complete:").pack(pady=10)
+        ctk.CTkLabel(dialog, text="Select activity to complete:").pack(pady=10)
         
         activity_var = tk.StringVar()
-        activity_combobox = ttk.Combobox(dialog, textvariable=activity_var)
+        activity_combobox = ctk.CTkComboBox(dialog, variable=activity_var)
         activity_combobox.pack(pady=10)
         
         conn = self.db._get_conn()
         cursor = conn.cursor()
         cursor.execute('SELECT name FROM activities')
         activities = [row[0] for row in cursor.fetchall()]
-        activity_combobox['values'] = activities
+        activity_combobox.configure(values=activities)
         
         def complete_activity():
             selected_activity = activity_var.get()
@@ -513,7 +605,7 @@ Available commands:
                 self.update_stats()
                 dialog.destroy()
         
-        ttk.Button(dialog, text="Complete", command=complete_activity).pack(pady=10)
+        ctk.CTkButton(dialog, text="Complete", command=complete_activity).pack(pady=10)
 
     def cmd_mood(self):
         mood_avg = self.db.get_weekly_mood_average()
@@ -552,22 +644,24 @@ Available commands:
             else:
                 activities = self.current_activities
 
-            ttk.Label(
+            mood_label = ctk.CTkLabel(
                 self.activities_frame,
                 text=f"Personalized Activities for {'Low' if mood_score < 0.3 else 'Neutral' if mood_score < 0.7 else 'Positive'} Mood",
-                font=('Segoe UI', 12, 'bold')
-            ).pack(pady=10)
+                font=ctk.CTkFont(size=12, weight="bold")
+            )
+            mood_label.pack(pady=10)
 
             if activities:
                 for activity in activities:
                     self.create_activity_card(activity)
             else:
-                ttk.Label(
+                error_label = ctk.CTkLabel(
                     self.activities_frame,
                     text="Unable to generate activities. Click 'Generate New Activities' to try again.",
-                    font=('Segoe UI', 10),
-                    foreground='red'
-                ).pack(pady=20)
+                    font=ctk.CTkFont(size=10),
+                    text_color="red"
+                )
+                error_label.pack(pady=20)
 
         except Exception as e:
             print(f"Error refreshing activities: {e}")
@@ -605,104 +699,116 @@ Available commands:
         return cursor.fetchone()[0] > 0
 
     def create_activity_card(self, activity):
-        card = ttk.LabelFrame(
-            self.activities_frame,
+        card = ctk.CTkFrame(self.activities_frame)
+        card.pack(fill=tk.X, pady=5, padx=10)
+
+        header_frame = ctk.CTkFrame(card)
+        header_frame.pack(fill=tk.X, padx=10, pady=(10,5))
+
+        title = ctk.CTkLabel(
+            header_frame,
             text=activity['name'],
-            padding=10
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        card.pack(fill=tk.X, pady=5)
+        title.pack(side=tk.LEFT)
 
-        desc_frame = ttk.Frame(card)
-        desc_frame.pack(fill=tk.X)
+        category_label = ctk.CTkLabel(
+            header_frame,
+            text=f"Category: {activity['category']}",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        category_label.pack(side=tk.RIGHT)
 
-        is_completed = False
-        if self.db:
-            today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-            today_end = datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
-            
-            conn = self.db._get_conn()
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT COUNT(*) FROM user_progress p
-                JOIN activities a ON p.activity_id = a.id
-                WHERE a.name = ? AND datetime(p.timestamp) BETWEEN datetime(?) AND datetime(?)
-            ''', (activity['name'], today_start, today_end))
-            is_completed = cursor.fetchone()[0] > 0
-
-        ttk.Label(
-            desc_frame,
+        desc_label = ctk.CTkLabel(
+            card,
             text=activity['description'],
             wraplength=400
-        ).pack(side=tk.LEFT, pady=5)
+        )
+        desc_label.pack(pady=5, padx=10)
 
-        status_frame = ttk.Frame(desc_frame)
-        status_frame.pack(side=tk.RIGHT, padx=5)
-
-        ttk.Label(
-            status_frame,
-            text=f"Category: {activity['category']}",
-            font=('Segoe UI', 9, 'italic')
-        ).pack()
+        is_completed = self.is_activity_completed(activity['name'])
 
         if is_completed:
-            ttk.Label(
-                status_frame,
+            complete_label = ctk.CTkLabel(
+                card,
                 text="✓ Completed",
-                foreground='green',
-                font=('Segoe UI', 9, 'bold')
-            ).pack()
-            
-            card.configure(style='Completed.TLabelframe')
+                text_color="green",
+                font=ctk.CTkFont(size=11, weight="bold")
+            )
+            complete_label.pack(pady=(0,10), padx=10)
         else:
-            ttk.Button(
+            complete_btn = ctk.CTkButton(
                 card,
                 text=f"Complete (+{activity['points']} pts)",
-                command=lambda: self.quick_complete_activity(activity['name'])
-            ).pack(anchor=tk.E)
+                command=lambda: self.quick_complete_activity(activity['name']),
+                font=ctk.CTkFont(size=11),
+                height=32
+            )
+            complete_btn.pack(pady=(5,10), padx=10)
 
     def show_log_activity_dialog(self):
-        dialog = tk.Toplevel(self.root)
+        dialog = ctk.CTkToplevel(self.root)
         dialog.title("Log Activity")
         dialog.geometry("500x400")
-
-        notebook = ttk.Notebook(dialog)
-        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-
-
-        existing_tab = ttk.Frame(notebook)
-        notebook.add(existing_tab, text="Existing Activities")
-
-
-        custom_tab = ttk.Frame(notebook)
-        notebook.add(custom_tab, text="Custom Activity")
-
-        ttk.Label(existing_tab, text="Select an activity:").pack(pady=10)
+        dialog.lift()  # Bring to front
+        dialog.focus_force()  # Force focus
         
-        activity_var = tk.StringVar()
-        activity_combo = ttk.Combobox(existing_tab, textvariable=activity_var)
-        cursor = self.db._get_conn().cursor()
-        cursor.execute('SELECT name FROM activities')
-        activities = [row[0] for row in cursor.fetchall()]
-        activity_combo['values'] = activities
-        activity_combo.pack(pady=5)
+        tab_view = ctk.CTkTabview(dialog)
+        tab_view.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        ttk.Label(
-            custom_tab, 
+        existing_tab = tab_view.add("Existing Activities")
+        custom_tab = tab_view.add("Custom Activity")
+
+        # Initialize buttons first
+        buttons_frame = ctk.CTkFrame(custom_tab)
+        buttons_frame.pack(fill=tk.X, padx=10, pady=5)  # Pack the frame first
+
+        preview_button = ctk.CTkButton(
+            buttons_frame,
+            text="Preview Activity",
+            width=120
+        )
+        edit_button = ctk.CTkButton(
+            buttons_frame,
+            text="Edit Activity",
+            state="disabled",
+            width=120
+        )
+        log_button = ctk.CTkButton(
+            buttons_frame,
+            text="Log Activity",
+            state="disabled",
+            width=120
+        )
+
+        preview_button.pack(side=tk.LEFT, padx=5)
+        edit_button.pack(side=tk.LEFT, padx=5)
+        log_button.pack(side=tk.LEFT, padx=5)
+
+        ctk.CTkLabel(
+            custom_tab,
             text="Describe your activity:",
-            font=('Segoe UI', 10, 'bold')
+            font=ctk.CTkFont(size=12, weight="bold")
         ).pack(pady=10)
-        
-        description_text = tk.Text(custom_tab, height=4, width=40)
-        description_text.pack(pady=5)
 
-        preview_frame = ttk.LabelFrame(custom_tab, text="Activity Preview", padding=10)
+        description_text = ctk.CTkTextbox(custom_tab, height=100)
+        description_text.pack(fill=tk.X, padx=10, pady=5)
+
+        preview_frame = ctk.CTkFrame(custom_tab)
         preview_frame.pack(fill=tk.X, padx=10, pady=10)
 
+        ctk.CTkLabel(
+            preview_frame,
+            text="Activity Preview",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(pady=5)
+
         preview_labels = {
-            'name': ttk.Label(preview_frame, text=""),
-            'category': ttk.Label(preview_frame, text=""),
-            'points': ttk.Label(preview_frame, text=""),
-            'description': ttk.Label(preview_frame, text="", wraplength=400)
+            'name': ctk.CTkLabel(preview_frame, text=""),
+            'category': ctk.CTkLabel(preview_frame, text=""),
+            'points': ctk.CTkLabel(preview_frame, text=""),
+            'description': ctk.CTkLabel(preview_frame, text="", wraplength=400)
         }
         for label in preview_labels.values():
             label.pack(anchor=tk.W, pady=2)
@@ -714,54 +820,46 @@ Available commands:
             if description:
                 activity = self.ai_helper.parse_custom_activity(description)
                 if activity:
-                    preview_labels['name'].config(
-                        text=f"Name: {activity['name']}"
-                    )
-                    preview_labels['category'].config(
-                        text=f"Category: {activity['category']}"
-                    )
-                    preview_labels['points'].config(
-                        text=f"Points: {activity['points']}"
-                    )
-                    preview_labels['description'].config(
-                        text=f"Description: {activity['description']}"
-                    )
-                    
-                    # Enable both buttons
+                    preview_labels['name'].configure(text=f"Name: {activity['name']}")
+                    preview_labels['category'].configure(text=f"Category: {activity['category']}")
+                    preview_labels['points'].configure(text=f"Points: {activity['points']}")
+                    preview_labels['description'].configure(text=f"Description: {activity['description']}")
                     current_preview['activity'] = activity
-                    edit_button.config(state='normal')
-                    log_button.config(state='normal')
+                    edit_button.configure(state="normal")
+                    log_button.configure(state="normal")
                     return activity
             return None
 
+        preview_button.configure(command=preview_custom_activity)
+
+        # Setup edit functionality
         def edit_preview():
-            edit_dialog = tk.Toplevel(dialog)
+            if not current_preview['activity']:
+                return
+                
+            edit_dialog = ctk.CTkToplevel(dialog)
             edit_dialog.title("Edit Activity")
             edit_dialog.geometry("400x400")
-
+            edit_dialog.lift()  # Bring to front
+            edit_dialog.focus_force()  # Force focus
+            
             fields = {}
             
-            ttk.Label(edit_dialog, text="Activity Name:").pack(pady=(10,0))
-            fields['name'] = ttk.Entry(edit_dialog)
+            ctk.CTkLabel(edit_dialog, text="Activity Name:").pack(pady=(10,0))
+            fields['name'] = ctk.CTkEntry(edit_dialog)
             fields['name'].insert(0, current_preview['activity']['name'])
             fields['name'].pack(pady=(0,10))
             
-            ttk.Label(edit_dialog, text="Description:").pack()
-            fields['description'] = tk.Text(edit_dialog, height=3, width=40)
+            ctk.CTkLabel(edit_dialog, text="Description:").pack()
+            fields['description'] = ctk.CTkTextbox(edit_dialog, height=100)
             fields['description'].insert('1.0', current_preview['activity']['description'])
             fields['description'].pack(pady=(0,10))
             
-            ttk.Label(edit_dialog, text="Points:").pack()
-            points_label = ttk.Label(
-                edit_dialog, 
-                text=str(current_preview['activity']['points']),
-                font=('Segoe UI', 10, 'bold')
-            )
-            points_label.pack(pady=(0,10))
+            ctk.CTkLabel(edit_dialog, text=f"Points: {current_preview['activity']['points']}").pack()
             
-            ttk.Label(edit_dialog, text="Category:").pack()
+            ctk.CTkLabel(edit_dialog, text="Category:").pack()
             categories = ["mindfulness", "exercise", "reflection", "social", "creative"]
-            fields['category'] = ttk.Combobox(edit_dialog, values=categories)
+            fields['category'] = ctk.CTkComboBox(edit_dialog, values=categories)
             fields['category'].set(current_preview['activity']['category'])
             fields['category'].pack(pady=(0,10))
             
@@ -773,56 +871,79 @@ Available commands:
                         'category': fields['category'].get()
                     })
                     
-                    preview_labels['name'].config(text=f"Name: {current_preview['activity']['name']}")
-                    preview_labels['category'].config(text=f"Category: {current_preview['activity']['category']}")
-                    preview_labels['points'].config(text=f"Points: {current_preview['activity']['points']}")
-                    preview_labels['description'].config(text=f"Description: {current_preview['activity']['description']}")
+                    preview_labels['name'].configure(text=f"Name: {current_preview['activity']['name']}")
+                    preview_labels['category'].configure(text=f"Category: {current_preview['activity']['category']}")
+                    preview_labels['points'].configure(text=f"Points: {current_preview['activity']['points']}")
+                    preview_labels['description'].configure(text=f"Description: {current_preview['activity']['description']}")
                     
                     edit_dialog.destroy()
                 except ValueError as e:
                     messagebox.showerror("Error", str(e))
             
-            ttk.Button(edit_dialog, text="Save Changes", command=save_edits).pack(pady=10)
+            ctk.CTkButton(edit_dialog, text="Save Changes", command=save_edits).pack(pady=10)
 
-        buttons_frame = ttk.Frame(custom_tab)
+        edit_button.configure(command=edit_preview)
+
+        def log_custom_activity():
+            activity = current_preview['activity']
+            if activity:
+                activity_id = self.db.add_generated_activity(activity)
+                points = self.db.complete_activity(activity['name'])
+                messagebox.showinfo(
+                    "Activity Logged",
+                    f"Custom activity '{activity['name']}' logged! You earned {points} points!"
+                )
+                dialog.destroy()
+                self.update_stats()
+                self.update_progress_view()
+
+        log_button.configure(command=log_custom_activity)
+
+        # Pack buttons at the end
         buttons_frame.pack(pady=5)
-
-        preview_button = ttk.Button(
-            buttons_frame,
-            text="Preview Activity",
-            command=preview_custom_activity
-        )
-        
-        edit_button = ttk.Button(
-            buttons_frame,
-            text="Edit Activity",
-            state='disabled',
-            command=edit_preview
-        )
-        
-        log_button = ttk.Button(
-            buttons_frame,
-            text="Log this Activity",
-            state='disabled'
-        )
-
-        # Pack buttons
         preview_button.pack(side=tk.LEFT, padx=5)
         edit_button.pack(side=tk.LEFT, padx=5)
         log_button.pack(side=tk.LEFT, padx=5)
 
-        notes_frame = ttk.LabelFrame(dialog, text="Notes (optional)", padding=10)
+        ctk.CTkLabel(
+            existing_tab,
+            text="Select an activity to complete:",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(pady=10)
+        
+        activity_var = tk.StringVar()
+        activity_combobox = ctk.CTkComboBox(
+            existing_tab,
+            variable=activity_var,
+            width=300
+        )
+        activity_combobox.pack(pady=10)
+        
+        conn = self.db._get_conn()
+        cursor = conn.cursor()
+        cursor.execute('SELECT name FROM activities')
+        activities = [row[0] for row in cursor.fetchall()]
+        activity_combobox.configure(values=activities)
+
+        notes_frame = ctk.CTkFrame(existing_tab)
         notes_frame.pack(fill=tk.X, padx=10, pady=5)
-        notes_text = tk.Text(notes_frame, height=3)
-        notes_text.pack(fill=tk.X)
+        
+        ctk.CTkLabel(
+            notes_frame,
+            text="Notes (optional):",
+            font=ctk.CTkFont(size=11)
+        ).pack(anchor=tk.W, pady=5)
+
+        notes_text = ctk.CTkTextbox(notes_frame, height=100)
+        notes_text.pack(fill=tk.X, pady=5)
 
         def save_existing_activity():
-            activity = activity_var.get()
+            selected_activity = activity_var.get()
             notes = notes_text.get("1.0", tk.END).strip()
-            if activity:
-                points = self.db.complete_activity(activity)
+            if selected_activity:
+                points = self.db.complete_activity(selected_activity)
                 if notes:
-                    self.db.add_activity_note(activity, notes)
+                    self.db.add_activity_note(selected_activity, notes)
                 messagebox.showinfo(
                     "Activity Logged",
                     f"Activity logged successfully! You earned {points} points!"
@@ -836,31 +957,12 @@ Available commands:
                     "Please select an activity"
                 )
 
-        ttk.Button(
+        save_button = ctk.CTkButton(
             existing_tab,
             text="Save Activity",
             command=save_existing_activity
-        ).pack(pady=10)
-
-        def log_previewed_activity():
-            activity = current_preview['activity']
-            if activity:
-                activity_id = self.db.add_generated_activity(activity)
-                points = self.db.complete_activity(activity['name'])
-
-                notes = notes_text.get("1.0", tk.END).strip()
-                if notes:
-                    self.db.add_activity_note(activity['name'], notes)
-                
-                messagebox.showinfo(
-                    "Activity Logged",
-                    f"Custom activity '{activity['name']}' logged! You earned {points} points!"
-                )
-                dialog.destroy()
-                self.update_stats()
-                self.update_progress_view()
-
-        log_button.config(command=log_previewed_activity)
+        )
+        save_button.pack(pady=10)
 
     def update_progress_view(self):
         today = datetime.now(self.timezone)
@@ -872,7 +974,7 @@ Available commands:
             week_text = "Current Week"
         else:
             week_text = f"Week of {start_of_week.strftime('%B %d, %Y')}"
-        self.week_label.config(text=week_text)
+        self.week_label.configure(text=week_text)  # Changed from config to configure
 
         week_activities = self.db.get_activities_for_week(start_of_week)
         print(f"Showing activities for week: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}")
@@ -882,14 +984,16 @@ Available commands:
             if day_activities:
                 cell.configure(
                     text="\n".join(day_activities),
-                    background='#e3f2fd'
+                    fg_color='#e3f2fd',  # Light blue background
+                    text_color='black'  # Changed from default gray to black
                 )
                 cell.bind('<Button-1>', lambda e, day=i, date=start_of_week+timedelta(days=i): 
                          self.show_day_details(day, date))
             else:
                 cell.configure(
                     text="No activities",
-                    background='white'
+                    fg_color='white',
+                    text_color='black'  # Changed from default gray to black
                 )
                 cell.unbind('<Button-1>')
 
@@ -916,83 +1020,79 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
         
         print(f"Showing details for: {selected_date.strftime('%Y-%m-%d %H:%M:%S %Z')}")
         
-        self.detail_popup = tk.Toplevel(self.root)
+        self.detail_popup = ctk.CTkToplevel(self.root)
         self.detail_popup.title(f"Activities for {selected_date.strftime('%A, %B %d')}")
         self.detail_popup.geometry("500x400")
+        self.detail_popup.lift()  # Bring to front
+        self.detail_popup.focus_force()  # Force focus
 
         # Create scrollable container
-        container = ttk.Frame(self.detail_popup)
+        container = ctk.CTkFrame(self.detail_popup)
         container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        canvas = tk.Canvas(container)
-        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        # Add activity details
         activities = self.db.get_day_activities(selected_date)
         if activities:
+            scrollable_frame = ctk.CTkScrollableFrame(container)
+            scrollable_frame.pack(fill=tk.BOTH, expand=True)
+            
             for activity in activities:
                 self.create_activity_detail_card(scrollable_frame, activity, selected_date)
         else:
-            ttk.Label(
-                scrollable_frame,
+            empty_label = ctk.CTkLabel(
+                container,
                 text="No activities recorded for this day",
-                font=('Segoe UI', 10, 'italic')
-            ).pack(pady=20)
-
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+                font=ctk.CTkFont(size=10, slant="italic")
+            )
+            empty_label.pack(pady=20)
 
     def create_activity_detail_card(self, parent, activity, date):
-        card = ttk.LabelFrame(
-            parent,
-            text=activity['name'],
-            padding=10
-        )
-        card.pack(fill=tk.X, pady=5)
+        card = ctk.CTkFrame(parent)
+        card.pack(fill=tk.X, pady=5, padx=10)
 
-        details = ttk.Frame(card)
-        details.pack(fill=tk.X)
+        title = ctk.CTkLabel(
+            card,
+            text=activity['name'],
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        title.pack(pady=(10,5))
+
+        details_frame = ctk.CTkFrame(card)
+        details_frame.pack(fill=tk.X, padx=10)
 
         activity_time = datetime.fromisoformat(activity['timestamp'])
         if not activity_time.tzinfo:
             activity_time = self.timezone.localize(activity_time)
         time_str = activity_time.strftime('%I:%M %p')
-        ttk.Label(
-            details,
+        
+        time_label = ctk.CTkLabel(
+            details_frame,
             text=f"Time: {time_str}",
-            font=('Segoe UI', 9)
-        ).pack(side=tk.LEFT)
+            font=ctk.CTkFont(size=9)
+        )
+        time_label.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(
-            details,
+        category_label = ctk.CTkLabel(
+            details_frame,
             text=f"Category: {activity['category']}",
-            font=('Segoe UI', 9)
-        ).pack(side=tk.LEFT, padx=10)
+            font=ctk.CTkFont(size=9)
+        )
+        category_label.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(
-            details,
+        points_label = ctk.CTkLabel(
+            details_frame,
             text=f"Points: {activity['points']}",
-            font=('Segoe UI', 9)
-        ).pack(side=tk.LEFT)
+            font=ctk.CTkFont(size=9)
+        )
+        points_label.pack(side=tk.LEFT, padx=5)
 
-        # Notes if any
         if activity['notes']:
-            ttk.Label(
+            notes_label = ctk.CTkLabel(
                 card,
                 text=f"Notes: {activity['notes']}",
                 wraplength=400
-            ).pack(fill=tk.X, pady=(5, 0))
+            )
+            notes_label.pack(fill=tk.X, pady=(5,0), padx=10)
 
-        # Delete button
         def confirm_delete():
             if messagebox.askyesno(
                 "Confirm Delete",
@@ -1002,16 +1102,17 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
                 card.destroy()
                 self.update_stats()
                 self.update_progress_view()
-                # If no more activities, close popup
                 if not parent.winfo_children():
                     self.detail_popup.destroy()
 
-        ttk.Button(
+        delete_btn = ctk.CTkButton(
             card,
             text="Delete Activity",
-            style='Danger.TButton',
-            command=confirm_delete
-        ).pack(anchor=tk.E, pady=(5, 0))
+            command=confirm_delete,
+            fg_color="red",
+            hover_color="darkred"
+        )
+        delete_btn.pack(anchor=tk.E, pady=(5,10), padx=10)
 
     def previous_week(self):
         self.current_week_offset -= 1
@@ -1025,8 +1126,124 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
         self.current_week_offset = 0
         self.update_progress_view()
 
+    def start_meditation(self):
+        self.meditation_duration = int(self.duration_var.get()) * 60  # Convert to seconds
+        self.meditation_start_time = time.time()
+        self.start_button.configure(state="disabled")
+        self.stop_button.configure(state="normal")
+        self.update_timer()
+
+    def stop_meditation(self):
+        if self.meditation_timer:
+            self.root.after_cancel(self.meditation_timer)
+        elapsed_time = int(time.time() - self.meditation_start_time)
+        self.start_button.configure(state="normal")
+        self.stop_button.configure(state="disabled")
+        self.show_meditation_feedback(elapsed_time)
+
+    def update_timer(self):
+        if not self.meditation_start_time:
+            return
+            
+        elapsed = int(time.time() - self.meditation_start_time)
+        remaining = max(0, self.meditation_duration - elapsed)
+        
+        minutes = remaining // 60
+        seconds = remaining % 60
+        self.timer_label.configure(text=f"{minutes:02d}:{seconds:02d}")
+        
+        if remaining > 0:
+            self.meditation_timer = self.root.after(1000, self.update_timer)
+        else:
+            self.meditation_timer = None
+            elapsed_time = self.meditation_duration
+            self.start_button.configure(state="normal")
+            self.stop_button.configure(state="disabled")
+            self.show_meditation_feedback(elapsed_time)
+
+    def show_meditation_feedback(self, meditation_time):
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Meditation Feedback")
+        dialog.geometry("500x300")
+        dialog.lift()
+        dialog.focus_force()
+        
+        minutes = meditation_time // 60
+        seconds = meditation_time % 60
+        
+        ctk.CTkLabel(
+            dialog,
+            text=f"You meditated for {minutes}:{seconds:02d}",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=10)
+        
+        ctk.CTkLabel(
+            dialog,
+            text="How are you feeling after your meditation?",
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=5)
+        
+        feedback_text = ctk.CTkTextbox(dialog, height=100)
+        feedback_text.pack(fill=tk.X, padx=20, pady=10)
+        
+        def submit_feedback():
+            feedback = feedback_text.get("1.0", tk.END).strip()
+            if feedback:
+                self.process_meditation_feedback(feedback, meditation_time)
+                dialog.destroy()
+            else:
+                messagebox.showwarning(
+                    "Missing Feedback",
+                    "Please share how you're feeling before submitting."
+                )
+        
+        ctk.CTkButton(
+            dialog,
+            text="Submit Feedback",
+            command=submit_feedback
+        ).pack(pady=10)
+
+    def process_meditation_feedback(self, feedback, duration):
+        # Analyze sentiment
+        sentiment_score, mood, _ = self.sentiment_analyzer.analyze_sentiment(feedback)
+        
+        # Calculate points based on duration and sentiment
+        # Base points: 1 point per minute
+        base_points = max(1, duration // 60)
+        
+        # Sentiment multiplier: 0.8 to 1.2 based on sentiment score
+        sentiment_multiplier = 0.8 + (sentiment_score * 0.4)
+        
+        total_points = round(base_points * sentiment_multiplier)
+        
+        # Create activity description
+        minutes = duration // 60
+        seconds = duration % 60
+        description = f"Meditation session ({minutes}:{seconds:02d}). Feedback: {feedback}"
+        
+        # Create activity
+        activity = {
+            'name': "Meditation Session",
+            'description': description,
+            'points': total_points,
+            'category': 'mindfulness'
+        }
+        
+        # Log the activity
+        activity_id = self.db.add_generated_activity(activity)
+        self.db.complete_activity(activity['name'])
+        
+        messagebox.showinfo(
+            "Meditation Complete",
+            f"Great job! You earned {total_points} points for your meditation session."
+        )
+        
+        self.update_stats()
+        self.update_progress_view()
+
 if __name__ == "__main__": 
-    root = tk.Tk()    
+    # Change from tk.Tk() to ctk.CTk()
+    root = ctk.CTk()    
     app = MentalHealthApp(root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
     root.mainloop()

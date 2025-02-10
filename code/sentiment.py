@@ -1,3 +1,6 @@
+# Sentiment analysis.
+# Uses AI to analyze the sentiments of the user's prompt.
+
 from textblob import TextBlob # type: ignore
 import nltk
 from typing import Tuple

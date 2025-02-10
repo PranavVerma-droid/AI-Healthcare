@@ -4,4 +4,5 @@ code/database.db
 code/dist/
 code/build/
 code/nltk_data/
+code/win_build_env/
 *.spec
