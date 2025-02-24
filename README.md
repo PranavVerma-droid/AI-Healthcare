@@ -35,7 +35,7 @@ Currently, this app is being powered by AI (Ollama), that is being hosted by me.
 - Then, Create a Python Virtual Env. Follow these Commands:
   - ```git clone https://github.com/PranavVerma-droid/AI-Healthcare```
   - ```cd AI-Healthcare```
-  - ```python -m venv venv```
+  - ```python3 -m venv venv```
   - ```venv/Scripts/Activate.ps1```
 - After that is done, install the dependencies:
   - ```pip install -r requirements.txt```

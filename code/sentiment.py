@@ -2,7 +2,7 @@
 # Uses AI to analyze the sentiments of the user's prompt.
 
 from textblob import TextBlob # type: ignore
-import nltk
+import nltk #type: ignore
 from typing import Tuple
 from ollama import Client # type: ignore
 from config import OLLAMA_HOST, AI_MODEL
