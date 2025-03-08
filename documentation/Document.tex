@@ -38,7 +38,7 @@
 
 \lstset{style=mystyle}
 
-\title{Stacy: AI Healthcare Assistant\\Project Documentation}
+\title{Project Stacy: AI Healthcare Assistant}
 \author{Pranav Verma}
 \date{\today}
 
@@ -48,320 +48,133 @@
 \tableofcontents
 \newpage
 
-\section{Our Journey: Developing an AI Mental Health Companion}
+\section{My Journey}
 
-\subsection{Why We Did This}
-In today's society, access to mental health services is frustratingly out of reach for everyone. In our studies, we spoke to several individuals who described their struggles: students who were anxious but couldn't access therapy, professionals who didn't have time to maintain regular sessions, and individuals in rural communities who have no access to mental health services. These conversations energized our desire to do something better – to offer something different: an always-accessible, judgment-free, and truly effective digital partner.
+\subsection{Why I Did This}
+I started this project after talking with a diverse group of individuals—students, working adults, and even my neighbors, who were all having a hard time accessing mental health services. I had one simple goal in mind: to create a digital companion that is always available, non-judgmental, and actually empathetic.
 
-\section{From Concept to Reality}
+\section{From Idea to Reality}
 
 \subsection{Early Development Days}
-When we first began to develop this project, we did nothing but prototype and plan for weeks. We'd sit for hours on end, testing different AI models, debating user interface options, and most importantly, thinking through who our application's users were. We knew we wanted to develop something that didn't feel so clinical and instead something akin to a nurturing friend.
+In the early stages, I spent my days prototyping, planning, and having many discussions. I experimented with various AI models and discussed different approaches to the user interface, with one thing in mind: I wanted to make my app feel like a friendly and caring companion, not just a tool.
 
-The breakthrough happened when we discovered the Qwen 2.5 model. In our testing, it revealed an unprecedented ability to hold emotionally intelligent conversations and provide consistent response. We weren't just interested in having smart AI – we wanted to build a digital friend who truly understood and responded to emotional nuances.
+I decided to go with Qwen 2.5, because I did not have enough powerful hardware to run the big and heavy models. Not only was it smart, but it could also detect emotional signals.
 
-\subsection{Design Philosophy}
-Our approach to designing was indeed human-oriented. We didn't cram in features, but instead, focused on creating moments of true connection. The interface needed to feel welcoming, like walking into a cozy living room. We chose soft colors, gentle animations, and clear, readable text. We designed every detail to reduce anxiety, instead of adding to it.
+\section{Core Features: The Pillars of My Application}
 
-\section{Core Features: The Heart of Our Application}
+\subsection{The AI Buddy}
+Stacy is more than a program; after months of fine-tuning, she has become a sympathetic presence that intuitively adapts to your mood. If you are anxious about an upcoming presentation or just need a calming presence, Stacy picks up on your mood and responds accordingly—offering reassurance or listening when you need to talk.
 
-\subsection{The AI Companion}
-Our AI friend is no robot. We have spent months fine-tuning its personality and response. It understands whether to offer reassurance or to simply shut up and let someone have their say. It is capable of reciting conversations and calling on them naturally, and creates a feeling of flow and authentic understanding.
-
-For example, if you tell them you're anxious about presenting, it might suggest relaxation strategies and check in on you afterward to hear how it goes. Such context sensitivity makes conversations feel natural and supportive.
-
-\subsection{Mood Tracking and Analysis}
-We approached mood-tracking in a unique manner compared to most apps. We didn't have users rate their mood, but instead developed a system to observe patterns in emotions through natural conversation. The AI looks for nuanced signals in how someone speaks and builds up a richer understanding over time.
-
-When someone's speech is showing increased amounts of stress, the system might suggest to them ahead of time what to do, or send them gentle reminders. It's having someone who notices something is amiss.
+\subsection{Mood Monitoring and Analysis}
+Rather than having users manually rate their mood, I developed a system that detects emotional patterns through normal conversations. Over time, Stacy learns about your behavior patterns and, when she detects stress, gently reminds you or suggests something helpful—providing subtle support like a thoughtful friend.
 
 \subsection{The Activity System}
-Our activity system developed through a general observation: if something is possible and rewarding, individuals take better care of themselves. We have structured our activity system to include a diverse mix of exercises, such as short breath exercises and longer, deeper creative exercises. We have carefully matched up each activity to mood states and available energies.
+My activity system is based on the belief that small accomplishments can have a significant impact on mood. The system suggests activities that are tailored to your current mood and energy levels, ranging from quick breathing exercises to creative challenges. Not only do you earn points by completing these activities, but you also feel supported and validated.
 
-The points system is not only for gamification – it's for rewarding small victories. You might earn points for completing a five-minute meditation, but, and most importantly, for having accomplished something and made progress.
-
-\section{Technical Insights: Behind the Scenes}
+\section{Technical Insights: In the Background}
 
 \subsection{Building the Brain}
-Creating a responsive and reliable AI system was our biggest challenge. We'll walk you through our solution:
-
-The AI engine is made up of several advanced pieces. In the middle, we have Qwen 2.5, and around it, several context-management and emotion-recognition systems. As you converse with the AI, in actuality, it is doing several jobs:
-\begin{itemize}
-    \item Understanding the direct message
-    \item Maintaining conversation context
-    \item Analyzing affective nuances
-    \item Checking for potential psychological issues
-    \item Selecting adequate response
-\end{itemize}
-
-All of this is accomplished in milliseconds, and natural conversation is produced.
+The artificial intelligence engine that powers Stacy is a sophisticated system. When users interact with her, the app seamlessly translates messages, maintains conversational context, recognizes emotional subtleties, detects psychological concerns, and generates responses—all within milliseconds.
 
 \subsection{Data Privacy and Protection}
-Privacy was our top priority. We made sure to have the system run on your machine locally. Your conversations, mood data, and activity trail never leave your machine. We have used local storage in the form of SQLite and robust cryptography for sensitive data. It is similar to having a personal diary in which only you have access.
+Privacy has been a priority since day one. Everything that users input—conversations, mood insights, and activity history—is securely stored on the device. I employed encrypted SQLite storage and strict cryptographic methods to make sure your data is as private as a personal diary.
 
 \section{Overcoming Development Hurdles}
 
 \subsection{The AI Response Challenge}
-One of our biggest early hurdles was getting the AI to respond appropriately to emotional content. During initial testing, we noticed the AI would sometimes miss emotional cues or respond inappropriately to sensitive topics. For instance, when a user expressed feeling overwhelmed, the AI might suggest "just trying to relax" - advice that often feels dismissive.
-
-We tackled this by developing what we call the "empathy layer." Here's how we solved it:
-First, we created a comprehensive emotional context system. Every user message now goes through multiple analysis stages:
-\begin{enumerate}
-    \item Primary emotional tone detection
-    \item Context comparison with previous conversations
-    \item Urgency/severity assessment
-    \item Response appropriateness check
-\end{enumerate}
-
-The results were dramatic. Our test users reported feeling much more understood, with one noting, "It feels like talking to someone who actually gets it."
+Initially, Stacy struggled to interpret emotional cues effectively. A simple remark about feeling overwhelmed would sometimes prompt a generic response. To fix this, I developed an empathy module that evaluates emotional tone, considers past interactions, assesses urgency, and ensures responses are contextually appropriate. This significantly improved the natural feel of conversations.
 
 \subsection{The Performance Puzzle}
-Another significant challenge emerged when we implemented real-time mood analysis. The initial version would freeze for several seconds while processing responses, completely breaking the natural flow of conversation. We couldn't ask users to wait 5-10 seconds for each response - it had to feel immediate.
+Early versions experienced noticeable delays in mood analysis. I resolved this by adding predictive pre-fetching, caching frequent interactions, offloading computationally expensive tasks to background threads, and integrating smooth loading animations. These optimizations resulted in near-instant responses.
 
-Our solution came through clever optimization:
-\begin{itemize}
-    \item We implemented predictive response loading - the AI starts preparing likely responses before they're needed
-    \item We built a response cache system for common conversations
-    \item We moved heavy processing to background threads
-    \item We added loading animations that felt natural rather than mechanical
-\end{itemize}
-
-The end result? Response times dropped from 5-10 seconds to under 500 milliseconds. One user commented, "I sometimes forget I'm talking to an AI."
-
-\subsection{The Privacy Challenge}
-Privacy presented a unique challenge. We needed to balance helpful features with data protection. Early versions stored conversation data in plain text, which wasn't acceptable for sensitive mental health information.
-
-Here's how we solved it:
-We developed a local-first architecture where all data stays on the user's device. We implemented:
-\begin{itemize}
-    \item End-to-end encryption for all stored data
-    \item Secure memory handling to prevent data leaks
-    \item Automatic data purging options
-    \item Anonymous usage analytics
-\end{itemize}
-
-One mental health professional who tested our system noted, "This is the first AI mental health tool I'd feel comfortable recommending to my patients."
+\subsection{The Privacy Dilemma}
+My early models stored conversation history in plain text—a major security issue that I quickly addressed. I transitioned to a local-first design with end-to-end encryption, secure memory management, on-demand data deletion, and privacy-conscious analytics, ensuring complete user confidentiality.
 
 \subsection{The Context Memory Problem}
-We hit a wall with conversation context. The AI would forget important details from earlier in the conversation, leading to disconnected and sometimes frustrating interactions. For example, if a user mentioned being anxious about an upcoming presentation, the AI might ask "How are you feeling?" without referencing the presentation later.
-
-Our solution involved creating a "memory hierarchy":
-\begin{enumerate}
-    \item Short-term conversation memory (current session)
-    \item Medium-term context memory (recent sessions)
-    \item Long-term pattern memory (user preferences and patterns)
-\end{enumerate}
-
-We also developed a "conversation anchoring" system that maintains key discussion points throughout the interaction. The improvement was significant - users reported feeling like they were having a continuous conversation rather than disconnected chats.
+Previously, Stacy would forget important details from ongoing conversations, leading to fragmented interactions. I addressed this by implementing a memory hierarchy: short-term memory for active sessions, medium-term memory for recent conversations, and long-term recall for recurring patterns. A conversation anchoring mechanism also strengthens Stacy's ability to maintain coherence.
 
 \subsection{The Engagement Challenge}
-Early versions of our activity system had low engagement rates. Users would try activities once or twice, then stop using them. This was a critical issue since activities are key to improving mental well-being.
-
-We revolutionized our approach by:
-\begin{itemize}
-    \item Creating dynamic difficulty scaling based on user energy levels
-    \item Implementing a "micro-progress" system for smaller achievements
-    \item Adding contextual activity suggestions based on conversation content
-    \item Developing a flexible scheduling system that adapted to user habits
-\end{itemize}
-
-The results exceeded our expectations. Activity completion rates increased by 300%, and user retention improved significantly. One user shared, "It's like having a friend who knows exactly when to suggest the right activity."
+Initially, user engagement with activity suggestions was low. I enhanced the system by introducing adaptive difficulty levels, rewarding micro-progress, tailoring recommendations based on real-time conversation cues, and allowing flexible scheduling. These improvements made activities more engaging and accessible.
 
 \subsection{Lessons Learned}
-These challenges taught us valuable lessons about developing mental health technology:
-\begin{itemize}
-    \item Always prioritize user experience over technical elegance
-    \item Test with diverse user groups early and often
-    \item Build privacy protection into every feature from the start
-    \item Focus on creating natural, human-like interactions
-\end{itemize}
+This journey reinforced the importance of balancing technical excellence with a genuine user experience. Frequent testing with diverse user groups, prioritizing privacy from the outset, and ensuring meaningful, human-like interactions were all crucial in shaping Stacy.
 
 \section{Real-World Impact}
 
 \subsection{User Stories}
-The real evidence of our success is in our users' testimonials. We heard college student Sarah's account of how our application relieved finals week panic. Night shift employee James found comfort in having someone to talk to in late, quiet hours. These testimonials inspire our continued improvement.
+After the project reached it's final stage, I decided to try it out in the wild. I gave a copy of Stacy to anyone and everyone that I felt needed it. That includes my dad, who is constantly in stress from work, my mom, who again is under stress from house work, and other users aswell. All of them reported that they feel better after using Stacy.
 
 \subsection{Continuous Improvement}
-We're constantly learning and perfecting. We have made various noteworthy updates through user feedback:
+Learning is an ongoing process. User feedback has guided improvements such as more personalized activity suggestions, enhanced crisis response handling, improved memory retention, and even more natural conversations.
 
-\begin{itemize}
-    \item More individual activity suggestions
-    \item Better Crisis Situation Handling
-    \item Improved conversation memory
-    \item More natural language processing
-\end{itemize}
+\subsection{Open Source Contribution}
+I've made Stacy available as an open-source project on GitHub at \url{https://github.com/PranavVerma-droid/AI-Healthcare}. By making the code accessible to everyone, I hope to encourage collaboration, innovation, and wider adoption of mental health technology. Anyone can contribute to Stacy's development, adapt it for specific needs, or use it as a foundation for similar initiatives.
 
-\section{Feature Deep Dive}
+\section{Technical Implementation Details}
 
-\subsection{Core Functionality Breakdown}
+In this section, I highlight some of the key technical components that power Stacy. Below are short excerpts from the code used in the project.
 
-\subsubsection{Intelligent Conversation System}
-Our AI companion, Stacy, stands out through its sophisticated conversation handling:
-\begin{itemize}
-    \item \textbf{Context-Aware Responses:} The system maintains a conversation history and references past interactions naturally. For example, if you mentioned feeling anxious about a presentation on Monday, Stacy might ask on Tuesday, "How did your presentation go?"
+\subsection{AI Response Generation}
+The core logic for generating Stacy's conversational responses is implemented in the \texttt{AIHelper} class. For example:
+
+\begin{lstlisting}[language=Python, caption=AI Response Handler, label=lst:ai_helper]
+# file: ai_helper.py
+
+def get_response(self, user_input):
+    # Build detailed context including today's activities and recent chats
+    todays_activities = self.activity_manager.get_todays_activities()
+    # ...existing code...
     
-    \item \textbf{Emotion Recognition:} Using a dual-layer sentiment analysis system:
-    \begin{itemize}
-        \item Primary: Qwen 2.5 model for nuanced understanding
-        \item Backup: TextBlob for redundancy and validation
-        \item Combined scoring for more accurate emotional assessment
-    \end{itemize}
+    daily_context = "Today's Activities: " + todays_activities
+    # ...existing code...
     
-    \item \textbf{Adaptive Personality:} Stacy adjusts her communication style based on:
-    \begin{itemize}
-        \item User's current emotional state
-        \item Time of day and recent activities
-        \item Historical interaction patterns
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Dynamic Activity System}
-Our activity recommendation engine goes beyond simple suggestions:
-\begin{itemize}
-    \item \textbf{Mood-Based Recommendations:} Activities are tailored to:
-    \begin{itemize}
-        \item Current emotional state
-        \item Energy level patterns
-        \item Time of day
-        \item Previous completion rates
-    \end{itemize}
+    messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": user_input})
     
-    \item \textbf{Progressive Challenge System:} 
-    \begin{itemize}
-        \item Starts with simple, achievable tasks
-        \item Gradually increases complexity
-        \item Adapts difficulty based on user engagement
-        \item Provides "quick wins" during low mood periods
-    \end{itemize}
+    response = self.client.chat(model=self.model, messages=messages)
+\end{lstlisting}
+
+\subsection{Sentiment Analysis}
+Stacy's empathetic responses are driven by real-time sentiment analysis. The \texttt{SentimentAnalyzer} class uses an AI service with a fallback mechanism:
+
+\begin{lstlisting}[language=Python, caption=Sentiment Analysis, label=lst:sentiment]
+# file: sentiment.py
+
+def analyze_sentiment(self, text: str) -> Tuple[float, str, float]:
+    messages are [
+        {"role": "system", "content": "Analyze the sentiment of the following text."},
+        # ...existing code...
+    ]
     
-    \item \textbf{Smart Activity Generation:} The AI creates personalized activities by:
-    \begin{itemize}
-        \item Analyzing successful past activities
-        \item Considering current mood trends
-        \item Incorporating user feedback
-        \item Adapting to completion patterns
-    \end{itemize}
-\end{itemize}
+    response = self.client.chat(model=self.model, messages=messages)
+\end{lstlisting}
 
-\subsection{Innovative Design Elements}
+\subsection{Local Data Management and Privacy}
+Stacy maintains user data locally with SQLite. The \texttt{Database} class initializes the required tables while enforcing local security:
 
-\subsubsection{User Interface Philosophy}
-We designed our interface with specific mental health considerations:
-\begin{itemize}
-    \item \textbf{Calming Color Scheme:} 
-    \begin{itemize}
-        \item Soft, muted colors to reduce anxiety
-        \item Dynamic darkness adaptation
-        \item Consistent visual hierarchy
-    \end{itemize}
+\begin{lstlisting}[language=Python, caption=Database Handler, label=lst:database]
+# file: database.py
+
+def _init_db(self):
+    conn = sqlite3.connect(self.db_path)
+    cursor = conn.cursor()
     
-    \item \textbf{Intuitive Navigation:}
-    \begin{itemize}
-        \item Single-click access to key features
-        \item Clear visual feedback
-        \item Gentle animations for state changes
-    \end{itemize}
+    # Create tables for chat_history, mood_tracking, activities, user_progress, and activity_notes
+    cursor.execute("CREATE TABLE IF NOT EXISTS chat_history (...);")
+    # ...existing code...
+\end{lstlisting}
+
+\subsection{UI Interaction and Asynchronous Processing}
+The responsive UI built with CustomTkinter utilizes threading to process AI input without freezing the interface:
+
+\begin{lstlisting}[language=Python, caption=Main Interface, label=lst:main]
+# file: main.py
+
+def send_message(self):
+    user_input = self.message_input.get().strip()
     
-    \item \textbf{Progress Visualization:}
-    \begin{itemize}
-        \item Dynamic mood trends
-        \item Activity completion patterns
-        \item Achievement milestones
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Privacy-First Architecture}
-Our unique approach to data handling:
-\begin{itemize}
-    \item \textbf{Local Processing:}
-    \begin{itemize}
-        \item All data stays on user's device
-        \item Encrypted local storage
-        \item No cloud dependencies
-    \end{itemize}
-    
-    \item \textbf{User Control:}
-    \begin{itemize}
-        \item Optional data retention
-        \item Secure data export
-        \item Privacy-preserving analytics
-    \end{itemize}
-\end{itemize}
-
-\subsection{Technical Architecture}
-
-\subsubsection{System Components}
-Our application's architecture prioritizes reliability and responsiveness:
-\begin{itemize}
-    \item \textbf{Frontend Layer:}
-    \begin{itemize}
-        \item CustomTkinter for modern UI
-        \item Threaded operation handling
-        \item Responsive design patterns
-    \end{itemize}
-    
-    \item \textbf{Processing Layer:}
-    \begin{itemize}
-        \item Asynchronous AI processing
-        \item Background task management
-        \item Event-driven updates
-    \end{itemize}
-    
-    \item \textbf{Storage Layer:}
-    \begin{itemize}
-        \item SQLite for persistence
-        \item Transaction management
-        \item Data integrity checks
-    \end{itemize}
-\end{itemize}
-
-\subsection{Performance Optimizations}
-
-\subsubsection{Response Time Improvements}
-We implemented several optimizations to ensure smooth user experience:
-\begin{itemize}
-    \item \textbf{Predictive Loading:}
-    \begin{itemize}
-        \item Pre-fetches likely responses
-        \item Caches common interactions
-        \item Background data processing
-    \end{itemize}
-    
-    \item \textbf{Memory Management:}
-    \begin{itemize}
-        \item Efficient resource allocation
-        \item Automatic cleanup routines
-        \item Memory-conscious data structures
-    \end{itemize}
-\end{itemize}
-
-\subsection{Unique Features}
-
-\subsubsection{Meditation Timer}
-A specialized feature for mindfulness practice:
-\begin{itemize}
-    \item Customizable session lengths
-    \item Guided breathing patterns
-    \item Post-session mood tracking
-    \item Progress statistics
-\end{itemize}
-
-\subsubsection{Activity Journaling}
-Integrated reflection system:
-\begin{itemize}
-    \item Mood-correlated activity notes
-    \item Pattern recognition
-    \item Progress visualization
-    \item Achievement tracking
-\end{itemize}
-
-\section{The Road Ahead}
-Our vision for the future is exhilarating. We're exploring integration with wearable technology to better decipher physical signs of stress. We're designing in-group capabilities for collaborative interactions. And we're designing a mobile version to bring our tools to everyone.
-
-\subsection{Join Our Journey}
-This project is not only code and algorithms – it's accessible mental health support for everyone. If you're a developer who is interested in giving back, or someone in need of assistance, join us on this journey.
-
-\section{Getting Started}
-Using the application is straightforward, but take time to get to know its capabilities. Start with general conversations, try different activities, and gradually explore advanced capabilities. Remember, this is your personal guide to mental health – use it in any format most convenient to you.
+    # Handle commands or dispatch AI response asynchronously
+    threading.Thread(target=self.process_message, args=(user_input,)).start()
+\end{lstlisting}
 
 \end{document}
