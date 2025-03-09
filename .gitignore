@@ -1,10 +1,10 @@
 venv/
-code/__pycache__/
-code/database.db
-code/dist/
-code/build/
-code/nltk_data/
-code/win_build_env/
+src/__pycache__/
+src/database.db
+src/dist/
+src/build/
+src/nltk_data/
+src/win_build_env/
 final-code-zip/
 *.spec
 

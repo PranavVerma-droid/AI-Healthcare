@@ -10,6 +10,7 @@ from config import OLLAMA_HOST, AI_MODEL
 class SentimentAnalyzer:
     def __init__(self):
         try:
+            # Using 'vader_lexicon' sentiment analysis tool.
             nltk.data.find('vader_lexicon')
         except LookupError:
             nltk.download('vader_lexicon')
@@ -19,6 +20,7 @@ class SentimentAnalyzer:
     def analyze_sentiment(self, text: str) -> Tuple[float, str, float]:
 
         # Analysis Template
+        # Ask Qwen2.5 for the mood tracking.
         messages = [{
             "role": "system",
             "content": """Analyze the emotional state in this message. 
@@ -51,6 +53,7 @@ class SentimentAnalyzer:
             print(f"AI analysis failed: {e}")
         
         # Fallback to TextBlob if AI fails
+        # This does not work well, but, it should work as a fallback option.
         analysis = TextBlob(text)
         base_score = (analysis.sentiment.polarity + 1) / 2
         

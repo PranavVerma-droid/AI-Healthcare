@@ -110,6 +110,8 @@ class AIHelper:
                 recent = "\nRecently completed activities: " + ", ".join(str(act) for act in recent_activities)
 
             # Activity Generation Template
+            # This will tell the AI to generate 3 activites, and output as a JSON object ONLY.
+            # (Using the same AI: Qwen 2.5)
             messages = [{
                 "role": "system",
                 "content": """You are an AI assistant that generates mental health activities. 
@@ -186,6 +188,7 @@ class AIHelper:
     def parse_custom_activity(self, description: str):
         try:
             # User's Custom Activity Generator
+            # Again, the same format.
             messages = [{
                 "role": "system",
                 "content": """You are an AI that categorizes and scores mental health activities.
@@ -235,6 +238,7 @@ class AIHelper:
             return None
 
     # Fallback activities (default incase the AI does not work)
+    # This will show incase the main AI is offline.
     def _get_fallback_activities(self, mood_type):
         """Provide fallback activities if AI generation fails"""
         fallbacks = {

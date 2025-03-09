@@ -42,16 +42,8 @@ Currently, this app is being powered by AI (Ollama), that is being hosted by me.
 - Replace the Server URL in [config.py](code/config.py):
   - Open the file, replace `https://ollama.pranavv.co.in` with `http://localhost:11434`.
 - Then, just run the app:
-  - ```cd code && py main.py```
+  - ```cd src && py main.py```
 
-
-  ## Build the Binary
-
-  After you have made the changes stated above, you can run the [build.py](code/build.py) file to make an executable:
-
-  - Create the Executable: ```py build.py```
-  - After that, the executable will be created in the [dist](code/dist) folder.
-  - You can then use this app with your self hosted ollama model.
 
 
 

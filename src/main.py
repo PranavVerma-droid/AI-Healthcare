@@ -43,6 +43,7 @@ class MentalHealthApp:
         self.create_gui()
         self.update_stats()
 
+        # Commands for the Chat interface.
         self.commands = {
             '/clear': self.cmd_clear,
             '/bye': self.cmd_exit,
@@ -412,6 +413,7 @@ class MentalHealthApp:
             self.display_message(f"You: {msg}")
             self.display_message(f"AI Assistant: {resp}")
 
+    # Display Commands.
     def cmd_help(self):
         help_text = """
 Available commands:
@@ -477,7 +479,7 @@ Available commands:
         self.update_stats()
 
     def display_message(self, message, msg_type='system'):
-        self.chat_area.configure(state='normal')  # Changed from config to configure
+        self.chat_area.configure(state='normal')
         self.chat_area.insert(tk.END, "\n", msg_type)
         if msg_type == 'user':
             message = "You: " + message
@@ -974,7 +976,7 @@ Available commands:
             week_text = "Current Week"
         else:
             week_text = f"Week of {start_of_week.strftime('%B %d, %Y')}"
-        self.week_label.configure(text=week_text)  # Changed from config to configure
+        self.week_label.configure(text=week_text)
 
         week_activities = self.db.get_activities_for_week(start_of_week)
         print(f"Showing activities for week: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}")
@@ -984,8 +986,8 @@ Available commands:
             if day_activities:
                 cell.configure(
                     text="\n".join(day_activities),
-                    fg_color='#e3f2fd',  # Light blue background
-                    text_color='black'  # Changed from default gray to black
+                    fg_color='#e3f2fd',
+                    text_color='black'
                 )
                 cell.bind('<Button-1>', lambda e, day=i, date=start_of_week+timedelta(days=i): 
                          self.show_day_details(day, date))
@@ -993,11 +995,10 @@ Available commands:
                 cell.configure(
                     text="No activities",
                     fg_color='white',
-                    text_color='black'  # Changed from default gray to black
+                    text_color='black' 
                 )
                 cell.unbind('<Button-1>')
 
-        # Update stats for selected week
         stats = self.db.get_stats_for_week(start_of_week)
         stats_text = f"""
 Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')}):
@@ -1118,7 +1119,7 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
         self.current_week_offset -= 1
         self.update_progress_view()
     def next_week(self):
-        if self.current_week_offset < 0:  # cant go future than current week
+        if self.current_week_offset < 0: 
             self.current_week_offset += 1
             self.update_progress_view()
 
@@ -1127,7 +1128,7 @@ Weekly Stats ({start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')
         self.update_progress_view()
 
     def start_meditation(self):
-        self.meditation_duration = int(self.duration_var.get()) * 60  # Convert to seconds
+        self.meditation_duration = int(self.duration_var.get()) * 60
         self.meditation_start_time = time.time()
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
