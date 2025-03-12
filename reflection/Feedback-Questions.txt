@@ -1,10 +1,40 @@
 How clear were the instructions provided for the workshop?
+Initially, the instructions were somewhat unclear and troublesome to understand. I had to reach out for clarification multiple times to fully 
+grasp the project requirements and expectations. Better structured documentation would have helped streamline the process.
+
 How effectively did the workshop help you develop your business strategy?
+The workshop was quite effective in helping me develop my business strategy. Through the process, I learned to identify market needs, 
+particularly in mental healthcare, and developed a comprehensive plan for Project Stacy that addresses real-world problems while maintaining 
+commercial viability.
+
 How useful were the interactive sessions in enhancing your understanding of strategic planning?
+The interactive sessions were invaluable. They provided practical insights into project planning, helped me refine my ideas through peer feedback, 
+and gave me a better understanding of how to structure a complex AI healthcare solution.
+
 Did the workshop meet your expectations in terms of content and practical application?
+Yes, despite the initial confusion with instructions, the workshop exceeded my expectations. It provided a solid framework for developing a 
+real-world AI application and helped me transform my theoretical knowledge into a practical, working solution.
+
 How would you describe the quality of the feedback and discussions during the presentation?
+The feedback sessions were highly constructive and insightful. Peers and mentors provided valuable suggestions that helped improve Project Stacy's 
+features and implementation. The discussions challenged my assumptions and led to better design decisions.
+
 How well did you feel the workshop supported your development of business strategies using available resources?
+The workshop provided excellent support in terms of resource utilization. It helped me understand how to leverage existing technologies 
+(like Qwen 2.5) effectively while working within technical constraints to create a viable product.
+
 How likely are you to apply the skills and knowledge gained from this workshop in your future projects?
+Extremely likely. The skills I've gained - from project planning to AI implementation and user-centered design - are directly applicable to future 
+projects. I've already started applying these principles to new ideas I'm developing.
+
 What aspect of the workshop did you find most beneficial?
+The most beneficial aspect was the hands-on development experience combined with strategic planning. Learning to balance technical capabilities with 
+user needs while maintaining privacy and security was particularly valuable.
+
 What improvements, if any, would you suggest for future workshops?
+I would suggest clearer initial documentation and project requirements to reduce confusion. Additionally, more structured mentorship sessions and 
+perhaps a more detailed timeline for project milestones would be helpful.
+
 Do you have any additional comments or feedback about the workshop experience?
+Overall, it was an enriching experience that helped me grow both technically and professionally. While the initial unclear instructions were 
+challenging, overcoming these obstacles added to the learning experience. The opportunity to develop a meaningful project like Stacy was incredibly rewarding.
