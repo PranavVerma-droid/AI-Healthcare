@@ -10,6 +10,9 @@ https://github.com/user-attachments/assets/a608bb12-4765-454c-ad9a-dd01eaa4a302
 This project is a submission for the Excelerate CodeMaster Solo's Competition (2025). <br>
 https://4excelerate.org
 
+Won 3rd Place in the Competition.
+![Certificate](https://github.com/user-attachments/assets/9cbdb1b7-8a61-4fa9-9e41-ac31bd823b0e)
+
 ## My Idea: AI-Powered Mental Health App
 
 Problem: Mental health issues are often overlooked due to stigma or lack of awareness.<br>
