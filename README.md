@@ -1,5 +1,10 @@
 # AI Healthcare Assistant
 
+<div align="center">
+  <img src="images/Stacy Logo Full.jpeg" alt="AI Healthcare Assistant" width="800px">
+</div>
+
+
 ## Demo Video
 
 Watch the demo video to understand how the AI Healthcare Assistant works:
